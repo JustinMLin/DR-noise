@@ -1,0 +1,51 @@
+---
+title: "5 Dim Enterotype Representations"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(encoding = "utf-8")
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(phyloseq)
+
+load("best rep (5 dim enterotype).Rda")
+```
+
+```{r}
+data(enterotype)
+
+data = as.data.frame(t(enterotype@otu_table))
+
+data = data %>%
+  select(where(function(x) mean(x < 0.1e-05) < 0.6)) %>%
+  mutate_all(function(x) log(1+x))
+
+pca = prcomp(data, center = TRUE, scale. = TRUE, rank. = 30)
+Z = pca$x
+```
+
+```{r}
+cluster = kmeans(Z, centers=2, nstart=30)$cluster
+```
+
+
+```{r, fig.width=18, fig.height=6, echo=FALSE}
+p1 = data.frame(x=best_X[,1], y=best_X[,2], color=factor(cluster)) %>%
+  ggplot(aes(x=x, y=y, color=color)) +
+  geom_point(size=1, show.legend=FALSE) +
+  labs(x="", y="", title="Replicating Signal \n(perplexity = 90)")
+
+p2 = data.frame(x=-best_X_noise[,1], y=-best_X_noise[,2], color=factor(cluster)) %>%
+  ggplot(aes(x=x, y=y, color=color)) +
+  geom_point(size=1, show.legend=FALSE) +
+  labs(x="", y="", title="Replicating Signal + Noise \n(perplexity = 50)")
+
+grid.arrange(p2, p1, nrow=1)
+```
+

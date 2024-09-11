@@ -1,0 +1,62 @@
+\documentclass{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{indentfirst}
+\usepackage{bbm}
+
+\newcommand{\partialy}{{\frac{\partial}{\partial y}}}
+\newcommand{\horzbar}{\rule[.5ex]{2.5ex}{0.5pt}}
+
+\begin{document}
+\section{Method}
+Given embedding $Z \in \mathbb{R}^{n \times q} \mapsto \mathbb{R}^{n \times p}$, we want to embed the out-of-sample point $w \in \mathbb{R}^sq$. For $i = 1,\hdots,n$, define $$P_i = \frac{\exp \left( -\frac{||w-z_i||^2}{2\sigma^2} \right)}{\sum_j \exp \left( -\frac{||w-z_j||^2}{2\sigma^2} \right)}.$$ Given a potential solution $y \in \mathbb{R}^p$, define $$Q_i = \frac{(1 + ||y-x_i||^2)^{-1}}{\sum_j (1+||y-x_j||^2)^{-1}}.$$ We want to find the vector $y$ that minimizes $$D_{KL}(P || Q) = \sum_i P_i \log \frac{P_i}{Q_i}.$$
+
+\section{Gradient}
+\begin{equation*}
+\begin{split}
+\partialy \sum_i P_i \log \frac{P_i}{Q_i} &= \sum_i P_i \frac{Q_i}{P_i} \partialy \frac{P_i}{Q_i} \\
+&= \sum_i P_iQ_i \partialy \frac{1}{Q_i} \\
+&= -\sum_i P_iQ_i \frac{1}{Q_i^2} \partialy Q_i\\
+&= -\sum_i \frac{P_i}{Q_i} \partialy Q_i
+\end{split}
+\end{equation*}
+
+$$\partialy (1 + ||y-x_i||^2)^{-1} = -\frac{2(y-x_i)}{(1 + ||y-x_i||^2)^2}$$
+
+\begin{equation*}
+\begin{split}
+\partialy Q_i &= \partialy \frac{(1 + ||y-x_i||^2)^{-1}}{\sum_j (1+||y-x_j||^2)^{-1}} \\
+&= \frac{\left[ \sum_j (1+||y-x_j||^2)^{-1} \right] \partialy (1 + ||y-x_i||^2)^{-1} - (1 + ||y-x_i||^2)^{-1} \partialy \left[ \sum_j (1+||y-x_j||^2)^{-1} \right]}{\left[ \sum_j (1+||y-x_j||^2)^{-1} \right]^2} \\
+&= \frac{-\left[ \sum_j (1+||y-x_j||^2)^{-1} \right] \frac{2(y-x_i)}{(1 + ||y-x_i||^2)^2} + (1 + ||y-x_i||^2)^{-1} \left[ \sum_j \frac{2(y-x_j)}{(1 + ||y-x_j||^2)^2} \right]}{\left[ \sum_j (1+||y-x_j||^2)^{-1} \right]^2} \\
+\end{split}
+\end{equation*}
+
+If we define $$a = \begin{bmatrix}
+(1 + ||y-x_1||^2)^{-1} \\
+\vdots \\
+(1 + ||y-x_n||^2)^{-1}
+\end{bmatrix} \textrm{ and }
+b = \begin{bmatrix}
+\vert & & \vert \\
+\frac{2(y-x_1)}{(1+||y-x_1||^2)^2} & \cdots & \frac{2(y-x_n)}{(1+||y-x_n||^2)^2} \\
+\vert & & \vert 
+\end{bmatrix},$$ 
+then $$\partialy Q_i = \frac{-\textrm{sum}(a)*b[,i] + a_i*\textrm{rowSums}(b)}{\textrm{sum}(a)^2}.$$ Using vectorization in R, $$\textrm{grad}_Q \vcentcolon = \begin{bmatrix}
+\horzbar & \partialy Q_1 & \horzbar \\
+& \vdots & \\
+\horzbar & \partialy Q_n & \horzbar 
+\end{bmatrix} = 
+\left(-\textrm{sum}(a)*b^T + a*\begin{bmatrix}
+\horzbar & \textrm{rowSums}(b) & \horzbar \\
+& \vdots & \\
+\horzbar & \textrm{rowSums}(b) & \horzbar \end{bmatrix} \right) / \textrm{sum}(a)^2$$
+
+$$\partialy D_{KL}(P || Q) = -\sum_i \frac{P_i}{Q_i} \partialy Q_i = -\textrm{colSums}\left( \frac{P}{Q} * \textrm{grad}_Q \right).$$
+
+\section{Choosing $\sigma$}
+$\sigma$ is chosen so that $$\textrm{perplexity} = 2^{-\sum P_i \log_2 P_i}$$ is equal to some pre-specified value. The creators of t-SNE suggested the perplexity should range form 5 to 50 based on sample size.
+
+\end{document}

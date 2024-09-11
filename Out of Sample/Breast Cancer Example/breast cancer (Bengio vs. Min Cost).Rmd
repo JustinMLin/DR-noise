@@ -1,0 +1,208 @@
+---
+title: "Breast Cancer Example (Bengio vs. Min Cost)"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("../Out of sample algs.R")
+source("../Out of sample metrics.R")
+library(ggplot2)
+library(tidyverse)
+library(scatterplot3d)
+library(ade4)
+library(readxl)
+library(viridis)
+library(gridExtra)
+library(akima)
+```
+
+```{r}
+data = read_excel("breast cancer data.xlsx", col_names = FALSE)
+
+data = data %>%
+  select(-c(1,2))
+```
+
+```{r}
+Z = prcomp(data, center = FALSE, scale. = FALSE, tol = 0.001)$x
+X = cmdscale(dist(Z))
+
+n = length(Z[,1])
+p = length(Z[1,])
+col_vars = diag(var(Z))
+
+plot(X)
+```
+
+
+```{r calculate risks, include=FALSE}
+b = 40
+num_pts = 50
+vars = col_vars/10
+k = 20
+
+pt_indices = sample(1:n, num_pts)
+
+risks_Bengio = matrix(nrow = num_pts, ncol = 5)
+risks_mc = matrix(nrow = num_pts, ncol = 5)
+
+for (i in 1:num_pts) {
+  new_pts = matrix(rnorm(b * p, 0, rep(sqrt(vars), b)), ncol = p) + matrix(rep(Z[pt_indices[i],], each = b), nrow = b)
+  
+  trusts_Bengio = vector(length = b)
+  conts_Bengio = vector(length = b)
+  prec_Bengio = vector(length = b)
+  stresses_Bengio = vector(length = b)
+  dist_cors_Bengio = vector(length = b)
+  
+  trusts_mc = vector(length = b)
+  conts_mc = vector(length = b)
+  prec_mc= vector(length = b)
+  stresses_mc = vector(length = b)
+  dist_cors_mc = vector(length = b)
+  
+  for (j in 1:b) {
+    new_pt = new_pts[j,]
+    A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+    
+    y_Bengio = Trosset_approx(X, A2)
+    
+    delta = A2[1:n, (n+1)]
+    y_mc = min_cost_sq(X, delta)
+    
+    trusts_Bengio[j] = trustworthiness(Z, Z[pt_indices[i],], X, y_Bengio, k)
+    conts_Bengio[j] = continuity(Z, Z[pt_indices[i],], X, y_Bengio, k)
+    prec_Bengio[j] = precision(Z, Z[pt_indices[i],], X, y_Bengio, k)
+    stresses_Bengio[j] = stress(Z, Z[pt_indices[i],], X, y_Bengio)
+    dist_cors_Bengio[j] = dist_cor(Z, Z[pt_indices[i],], X, y_Bengio)
+    
+    trusts_mc[j] = trustworthiness(Z, Z[pt_indices[i],], X, y_mc, k)
+    conts_mc[j] = continuity(Z, Z[pt_indices[i],], X, y_mc, k)
+    prec_mc[j] = precision(Z, Z[pt_indices[i],], X, y_mc, k)
+    stresses_mc[j] = stress(Z, Z[pt_indices[i],], X, y_mc)
+    dist_cors_mc[j] = dist_cor(Z, Z[pt_indices[i],], X, y_mc)
+  }
+  
+  risks_Bengio[i,] = c(mean(trusts_Bengio), mean(conts_Bengio), mean(prec_Bengio), mean(stresses_Bengio), 
+                       mean(dist_cors_Bengio))
+  
+  risks_mc[i,] = c(mean(trusts_mc), mean(conts_mc), mean(prec_mc), mean(stresses_mc), 
+                   mean(dist_cors_mc))
+}
+```
+
+```{r create plots , include=FALSE}
+p_trust_Bengio = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_Bengio[,1]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.9,1)) +
+  ggtitle("Trustworthiness")
+
+p_cont_Bengio = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_Bengio[,2]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.9,1)) +
+  ggtitle("Continuity")
+
+p_prec_Bengio = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_Bengio[,3]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(0,.5)) +
+  ggtitle("Projected Precision Score")
+
+p_stress_Bengio = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_Bengio[,4]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(0,.06),
+                       begin = 1,
+                       end = 0) +
+  ggtitle("Normalized Stress")
+
+p_cor_Bengio = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_Bengio[,5]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.95,1)) +
+  ggtitle("Correlation of Distances")
+
+p_trust_mc = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_mc[,1]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.9,1)) +
+  ggtitle("Trustworthiness")
+
+p_cont_mc = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_mc[,2]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.9,1)) +
+  ggtitle("Continuity")
+
+p_prec_mc = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_mc[,3]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(0,.5)) +
+  ggtitle("Projected Precision Score")
+
+p_stress_mc = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_mc[,4]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(0,.06),
+                       begin = 1,
+                       end = 0) +
+  ggtitle("Normalized Stress")
+
+p_cor_mc = data.frame(x = X[pt_indices,1], y = X[pt_indices,2], risks = risks_mc[,5]) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point(aes(color = risks), size = 2) + 
+  scale_color_viridis(limits = c(.95,1)) +
+  ggtitle("Correlation of Distances")
+```
+
+```{r show Bengio plots, fig.height=18, fig.width=8}
+grid.arrange(p_trust_Bengio, p_trust_mc, p_cont_Bengio, p_cont_mc, p_prec_Bengio, p_prec_mc, p_stress_Bengio, p_stress_mc, p_cor_Bengio, p_cor_mc, ncol = 2)
+```
+
+
+```{r}
+og_errors_Bengio = matrix(nrow = num_pts, ncol = 5)
+og_errors_mc = matrix(nrow = num_pts, ncol = 5)
+
+for (i in 1:num_pts) {
+  new_pt = Z[pt_indices[i],]
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+    
+  y_Bengio = Trosset_approx(X, A2)
+    
+  delta = A2[1:n, (n+1)]
+  y_mc = min_cost_sq(X, delta)
+  
+  og_errors_Bengio[i,1] = trustworthiness(Z, new_pt, X, y_Bengio, k)
+  og_errors_Bengio[i,2] = continuity(Z, new_pt, X, y_Bengio, k)
+  og_errors_Bengio[i,3] = precision(Z, new_pt, X, y_Bengio, k)
+  og_errors_Bengio[i,4] = stress(Z, new_pt, X, y_Bengio)
+  og_errors_Bengio[i,5] = dist_cor(Z, new_pt, X, y_Bengio)
+  
+  og_errors_mc[i,1] = trustworthiness(Z, new_pt, X, y_mc, k)
+  og_errors_mc[i,2] = continuity(Z, new_pt, X, y_mc, k)
+  og_errors_mc[i,3] = precision(Z, new_pt, X, y_mc, k)
+  og_errors_mc[i,4] = stress(Z, new_pt, X, y_mc)
+  og_errors_mc[i,5] = dist_cor(Z, new_pt, X, y_mc)
+}
+```
+
+```{r}
+filled.contour(interp(x = X[pt_indices,1], y = X[pt_indices,2], z = (og_errors_Bengio[,1]-og_errors_mc[,1])/og_errors_Bengio[,1]),
+      color.palette = function(n) hcl.colors(n),
+      nlevels = 40,
+      zlim = c(0,.11))
+
+filled.contour(interp(x = X[pt_indices,1], y = X[pt_indices,2], z = (risks_Bengio[,1]-risks_mc[,1])/risks_Bengio[,1]),
+      color.palette = function(n) hcl.colors(n),
+      nlevels = 40,
+      zlim = c(0,.11))
+```

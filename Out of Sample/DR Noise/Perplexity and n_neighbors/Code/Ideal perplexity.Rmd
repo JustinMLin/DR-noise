@@ -1,0 +1,220 @@
+---
+title: "Ideal perplexity"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(tidyverse)
+library(gridExtra)
+library(ggplot2)
+library(magrittr)
+library(MASS)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+```
+
+```{r}
+get_var = function(name, num) {
+  get(paste(name, num, sep=""))
+}
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r}
+r = c(2,4,6,8)
+perplexity = c(10, 12, 14, 16, 18)
+k = 8
+noise_sd = 1
+
+Z = cbind(mvrnorm(60, rep(0,6), diag(4, nrow = 6)), 
+          matrix(0, nrow = 60, ncol = 4)) + 
+  matrix(rnorm(60*10, sd = noise_sd), nrow = 60)
+vars = diag(var(Z))
+
+for (i in 1:length(r)) {
+  assign(paste("pca", i, sep = ""), prcomp(Z, center = TRUE, rank = r[i]))
+  assign(paste("Y", i, sep=""), get_var("pca", i)$x)
+}
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+q = 2
+
+var_explained = pca1$sdev^2 / sum(pca1$sdev^2)
+plot(var_explained)
+lines(var_explained)
+```
+
+```{r}
+for (i in 1:length(perplexity)) {
+  assign(paste("trans_tsne", i, sep=""), tsne(Z, perplexity[i]))
+  assign(paste("X_tsne", i, sep=""), py_to_r(eval(parse(text = paste("trans_tsne", i, sep="")))))
+}
+```
+
+
+```{r}
+b = 40
+num_pts = 30
+indices = sample(1:n, num_pts)
+
+for (i in 1:length(r)) {
+  assign(paste("y", i, sep=""), get_var("Y", i)[indices,])
+  assign(paste("z", i, sep=""),
+         t(t(get_var("y", i) %*% t(get_var("pca", i)$rotation)) + get_var("pca", i)$center))
+}
+```
+
+```{r}
+noise_proportion = 0.5
+
+for (i in 1:length(r)) {
+  for (j in 1:length(perplexity)) {
+    assign(paste("stress", i, j, sep=""), vector(length = num_pts))
+    assign(paste("local_stress", i, j, sep=""), vector(length = num_pts))
+    
+    assign(paste("og_stress", i, j, sep=""), vector(length = num_pts))
+    assign(paste("og_local_stress", i, j, sep=""), vector(length = num_pts))
+    
+    for (k in 1:num_pts) {
+      new_pts = matrix(rep(get_var("z", i)[k,], each = b), nrow = b) + 
+        matrix(rnorm(b * p, 0, rep(sqrt(vars*noise_proportion), b)), nrow = b)
+      
+      stresses = local_stresses = 0
+      og_stresses = og_local_stresses = 0
+      
+      for (l in 1:b) {
+        new_pt = new_pts[l,]
+        x_tsne = py_to_r(predict_tsne(eval(parse(text = paste("trans_tsne", j, sep=""))), 
+                                      matrix(new_pt, nrow=1)))
+        
+        stresses = stresses + stress(get_var("Y", i), 
+                                     get_var("y", i)[k,], 
+                                     eval(parse(text = paste("X_tsne", j, sep=""))), 
+                                     x_tsne)
+        local_stresses = local_stresses + local_stress(get_var("Y", i), 
+                                                       get_var("y", i)[k,], 
+                                                       eval(parse(text = paste("X_tsne", j, sep=""))), 
+                                                       x_tsne, 
+                                                       k)
+        
+        og_stresses = og_stresses + stress(Z, 
+                                           new_pt, 
+                                           eval(parse(text = paste("X_tsne", j, sep=""))), 
+                                           x_tsne)
+        og_local_stresses = og_local_stresses + 
+          local_stress(Z, 
+                       new_pt, 
+                       eval(parse(text = paste("X_tsne", j, sep=""))), 
+                       x_tsne, 
+                       k)
+      }
+      eval(parse(text = paste("stress", i, j, "[k] = stresses/b", sep="")))
+      eval(parse(text = paste("local_stress", i, j, "[k] = local_stresses/b", sep="")))
+      
+      eval(parse(text = paste("og_stress", i, j, "[k] = og_stresses/b", sep="")))
+      eval(parse(text = paste("og_local_stress", i, j, "[k] = og_local_stresses/b", sep="")))
+    }
+  }
+}
+```
+
+```{r, include = FALSE}
+x_max = 1
+
+data_perp1 = data.frame(stress = c(stress11, stress21, stress31, stress41),
+                        local_stress = c(local_stress11, local_stress21, local_stress31, local_stress41),
+                        r = rep(r, each=num_pts))
+data_perp2 = data.frame(stress = c(stress12, stress22, stress32, stress42),
+                        local_stress = c(local_stress12, local_stress22, local_stress32, local_stress42),
+                        r = rep(r, each=num_pts))
+data_perp3 = data.frame(stress = c(stress13, stress23, stress33, stress43),
+                        local_stress = c(local_stress13, local_stress23, local_stress33, local_stress43),
+                        r = rep(r, each=num_pts))
+data_perp4 = data.frame(stress = c(stress14, stress24, stress34, stress44),
+                        local_stress = c(local_stress14, local_stress24, local_stress34, local_stress44),
+                        r = rep(r, each=num_pts))
+data_perp5 = data.frame(stress = c(stress15, stress25, stress35, stress45),
+                        local_stress = c(local_stress15, local_stress25, local_stress35, local_stress45),
+                        r = rep(r, each=num_pts))
+
+p11 = ggplot(data_perp1, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 10") + xlim(0,x_max)
+p21 = ggplot(data_perp2, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 12") + xlim(0,x_max)
+p31 = ggplot(data_perp3, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 14") + xlim(0,x_max)
+p41 = ggplot(data_perp4, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 16") + xlim(0,x_max)
+p51 = ggplot(data_perp5, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 18") + xlim(0,x_max)
+
+p12 = ggplot(data_perp1, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 10") + xlim(0,x_max)
+p22 = ggplot(data_perp2, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 12") + xlim(0,x_max)
+p32 = ggplot(data_perp3, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 14") + xlim(0,x_max)
+p42 = ggplot(data_perp4, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 16") + xlim(0,x_max)
+p52 = ggplot(data_perp5, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 18") + xlim(0,x_max)
+```
+
+```{r, fig.height = 16, fig.width=12}
+grid.arrange(p11, p12, 
+             p21, p22,
+             p31, p32,
+             p41, p42,
+             p51, p52,
+             ncol = 2)
+```
+
+```{r, include = FALSE}
+x_max = 1
+
+data_perp1 = data.frame(stress = c(og_stress11, og_stress21, og_stress31, og_stress41),
+                        local_stress = c(og_local_stress11, og_local_stress21, og_local_stress31,
+                                         og_local_stress41),
+                        r = rep(r, each=num_pts))
+data_perp2 = data.frame(stress = c(og_stress12, og_stress22, og_stress32, og_stress42),
+                        local_stress = c(og_local_stress12, og_local_stress22, og_local_stress32,
+                                         og_local_stress42),
+                        r = rep(r, each=num_pts))
+data_perp3 = data.frame(stress = c(og_stress13, og_stress23, og_stress33, og_stress43),
+                        local_stress = c(og_local_stress13, og_local_stress23, og_local_stress33,
+                                         og_local_stress43),
+                        r = rep(r, each=num_pts))
+data_perp4 = data.frame(stress = c(og_stress14, og_stress24, og_stress34, og_stress44),
+                        local_stress = c(og_local_stress14, og_local_stress24, og_local_stress34,
+                                         og_local_stress44),
+                        r = rep(r, each=num_pts))
+data_perp5 = data.frame(stress = c(og_stress15, og_stress25, og_stress35, og_stress45),
+                        local_stress = c(og_local_stress15, og_local_stress25, og_local_stress35,
+                                         og_local_stress45),
+                        r = rep(r, each=num_pts))
+
+p11 = ggplot(data_perp1, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 10") + xlim(0,x_max)
+p21 = ggplot(data_perp2, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 12") + xlim(0,x_max)
+p31 = ggplot(data_perp3, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 14") + xlim(0,x_max)
+p41 = ggplot(data_perp4, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 16") + xlim(0,x_max)
+p51 = ggplot(data_perp5, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 18") + xlim(0,x_max)
+
+p12 = ggplot(data_perp1, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 10") + xlim(0,x_max)
+p22 = ggplot(data_perp2, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 12") + xlim(0,x_max)
+p32 = ggplot(data_perp3, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 14") + xlim(0,x_max)
+p42 = ggplot(data_perp4, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 16") + xlim(0,x_max)
+p52 = ggplot(data_perp5, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("perplexity = 18") + xlim(0,x_max)
+```
+
+```{r, fig.height = 16, fig.width=12}
+grid.arrange(p11, p12, 
+             p21, p22,
+             p31, p32,
+             p41, p42,
+             p51, p52,
+             ncol = 2)
+```

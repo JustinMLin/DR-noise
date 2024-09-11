@@ -1,0 +1,62 @@
+---
+title: "10 Dim scRNA-seq Representations"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(encoding = "utf-8")
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+
+load("best rep (10 dim scRNA-seq).Rda")
+```
+
+```{r}
+data = read.delim("../../../../../scRNA-seq data/molecules.txt")
+
+data = as.data.frame(t(data))
+data = data %>%
+  dplyr::select(where(function(x) mean(x == 0) < 0.2)) %>%
+  mutate_all(function(x) log(1+x))
+
+pca = prcomp(data, center = TRUE, scale. = TRUE, rank. = 30)
+Z = pca$x
+```
+
+```{r}
+library(cluster)
+library(factoextra)
+fviz_nbclust(Z, kmeans, method = "wss")
+fviz_nbclust(Z, kmeans, method = "silhouette")
+clusOut = clusGap(x = Z, FUNcluster = kmeans, K.max = 15, iter.max = 50, nstart = 30)
+plot(clusOut, main="Gap Statistic")
+```
+
+
+```{r}
+cluster = kmeans(Z, centers=11, nstart=30)$cluster
+cluster_hier = hclust(dist(Z, method="manhattan"), method="ward.D")
+cluster1 = cutree(cluster_hier, k=13)
+
+plot(cluster_hier, labels=FALSE)
+```
+
+```{r, fig.width=18, fig.height=6, echo=FALSE}
+p1 = data.frame(x=-best_X[,1], y=-best_X[,2], color=factor(cluster1)) %>%
+  ggplot(aes(x=x, y=y, color=color)) +
+  geom_point(size=1, show.legend=FALSE) +
+  labs(x="", y="", title="Replicating Signal \n(perplexity = 60)")
+
+p2 = data.frame(x=best_X_noise[,1], y=best_X_noise[,2], color=factor(cluster1)) %>%
+  ggplot(aes(x=x, y=y, color=color)) +
+  geom_point(size=1, show.legend=FALSE) +
+  labs(x="", y="", title="Replicating Signal + Noise \n(perplexity = 50)")
+
+grid.arrange(p2, p1, nrow=1)
+```
+

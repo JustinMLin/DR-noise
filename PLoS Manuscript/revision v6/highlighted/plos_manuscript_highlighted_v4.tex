@@ -1,0 +1,680 @@
+% Template for PLoS
+% Version 3.5 March 2018
+%
+% % % % % % % % % % % % % % % % % % % % % %
+%
+% -- IMPORTANT NOTE
+%
+% This template contains comments intended 
+% to minimize problems and delays during our production 
+% process. Please follow the template instructions
+% whenever possible.
+%
+% % % % % % % % % % % % % % % % % % % % % % % 
+%
+% Once your paper is accepted for publication, 
+% PLEASE REMOVE ALL TRACKED CHANGES in this file 
+% and leave only the final text of your manuscript. 
+% PLOS recommends the use of latexdiff to track changes during review, as this will help to maintain a clean tex file.
+% Visit https://www.ctan.org/pkg/latexdiff?lang=en for info or contact us at latex@plos.org.
+%
+%
+% There are no restrictions on package use within the LaTeX files except that 
+% no packages listed in the template may be deleted.
+%
+% Please do not include colors or graphics in the text.
+%
+% The manuscript LaTeX source should be contained within a single file (do not use \input, \externaldocument, or similar commands).
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+%
+% -- FIGURES AND TABLES
+%
+% Please include tables/figure captions directly after the paragraph where they are first cited in the text.
+%
+% DO NOT INCLUDE GRAPHICS IN YOUR MANUSCRIPT
+% - Figures should be uploaded separately from your manuscript file. 
+% - Figures generated using LaTeX should be extracted and removed from the PDF before submission. 
+% - Figures containing multiple panels/subfigures must be combined into one image file before submission.
+% For figure citations, please use "Fig" instead of "Figure".
+% See http://journals.plos.org/plosone/s/figures for PLOS figure guidelines.
+%
+% Tables should be cell-based and may not contain:
+% - spacing/line breaks within cells to alter layout or alignment
+% - do not nest tabular environments (no tabular environments within tabular environments)
+% - no graphics or colored text (cell background color/shading OK)
+% See http://journals.plos.org/plosone/s/tables for table guidelines.
+%
+% For tables that exceed the width of the text column, use the adjustwidth environment as illustrated in the example table in text below.
+%
+% % % % % % % % % % % % % % % % % % % % % % % %
+%
+% -- EQUATIONS, MATH SYMBOLS, SUBSCRIPTS, AND SUPERSCRIPTS
+%
+% IMPORTANT
+% Below are a few tips to help format your equations and other special characters according to our specifications. For more tips to help reduce the possibility of formatting errors during conversion, please see our LaTeX guidelines at http://journals.plos.org/plosone/s/latex
+%
+% For inline equations, please be sure to include all portions of an equation in the math environment.  For example, x$^2$ is incorrect; this should be formatted as $x^2$ (or $\mathrm{x}^2$ if the romanized font is desired).
+%
+% Do not include text that is not math in the math environment. For example, CO2 should be written as CO\textsubscript{2} instead of CO$_2$.
+%
+% Please add line breaks to long display equations when possible in order to fit size of the column. 
+%
+% For inline equations, please do not include punctuation (commas, etc) within the math environment unless this is part of the equation.
+%
+% When adding superscript or subscripts outside of brackets/braces, please group using {}.  For example, change "[U(D,E,\gamma)]^2" to "{[U(D,E,\gamma)]}^2". 
+%
+% Do not use \cal for caligraphic font.  Instead, use \mathcal{}
+%
+% % % % % % % % % % % % % % % % % % % % % % % % 
+%
+% Please contact latex@plos.org with any questions.
+%
+% % % % % % % % % % % % % % % % % % % % % % % %
+
+\documentclass[10pt,letterpaper]{article}
+\usepackage[top=0.85in,left=2.75in,footskip=0.75in]{geometry}
+
+% amsmath and amssymb packages, useful for mathematical formulas and symbols
+\usepackage{amsmath,amssymb}
+
+% Use adjustwidth environment to exceed column width (see example table in text)
+\usepackage{changepage}
+
+% Use Unicode characters when possible
+\usepackage[utf8x]{inputenc}
+
+% textcomp package and marvosym package for additional characters
+\usepackage{textcomp,marvosym}
+
+% cite package, to clean up citations in the main text. Do not remove.
+\usepackage{cite}
+
+% Use nameref to cite supporting information files (see Supporting Information section for more info)
+\usepackage{nameref,hyperref}
+
+% line numbers
+\usepackage[right]{lineno}
+
+% ligatures disabled
+\usepackage{microtype}
+\DisableLigatures[f]{encoding = *, family = * }
+
+% color can be used to apply background shading to table cells only
+\usepackage[table]{xcolor}
+
+% array package and thick rules for tables
+\usepackage{array}
+
+% create "+" rule type for thick vertical lines
+\newcolumntype{+}{!{\vrule width 2pt}}
+
+% create \thickcline for thick horizontal lines of variable length
+\newlength\savedwidth
+\newcommand\thickcline[1]{%
+  \noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
+  \cline{#1}%
+  \noalign{\vskip\arrayrulewidth}%
+  \noalign{\global\arrayrulewidth\savedwidth}%
+}
+
+% \thickhline command for thick horizontal lines that span the table
+\newcommand\thickhline{\noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
+\hline
+\noalign{\global\arrayrulewidth\savedwidth}}
+
+
+% Remove comment for double spacing
+\usepackage{setspace} 
+\doublespacing
+
+% Text layout
+\raggedright
+\setlength{\parindent}{0.5cm}
+\textwidth 5.25in 
+\textheight 8.75in
+
+% Bold the 'Figure #' in the caption and separate it from the title/caption with a period
+% Captions will be left justified
+\usepackage[aboveskip=1pt,labelfont=bf,labelsep=period,justification=raggedright,singlelinecheck=off]{caption}
+\renewcommand{\figurename}{Fig}
+
+% Use the PLoS provided BiBTeX style
+\bibliographystyle{plos2015}
+
+% Remove brackets from numbering in List of References
+\makeatletter
+\renewcommand{\@biblabel}[1]{\quad#1.}
+\makeatother
+
+% Header and Footer with logo
+\usepackage{lastpage,fancyhdr,graphicx}
+\usepackage{epstopdf}
+%\pagestyle{myheadings}
+\pagestyle{fancy}
+\fancyhf{}
+%\setlength{\headheight}{27.023pt}
+%\lhead{\includegraphics[width=2.0in]{PLOS-submission.eps}}
+\rfoot{\thepage/\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrule}{\hrule height 2pt \vspace{2mm}}
+\fancyheadoffset[L]{2.25in}
+\fancyfootoffset[L]{2.25in}
+\lfoot{\today}
+
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{soul}
+
+%% Include all macros below
+
+\newcommand{\lorem}{{\bf LOREM}}
+\newcommand{\ipsum}{{\bf IPSUM}}
+
+%% END MACROS SECTION
+
+
+\begin{document}
+\vspace*{0.2in}
+
+% Title must be 250 characters or less.
+\begin{flushleft}
+{\Large
+\textbf\newline{Calibrating dimension reduction hyperparameters in the presence of noise} % Please use "sentence case" for title and headings (capitalize only the first word in a title (or heading), the first word in a subtitle (or subheading), and any proper nouns).
+}
+\newline
+% Insert author names, affiliations and corresponding author email (do not include titles, positions, or degrees).
+\\
+Justin Lin\textsuperscript{1*},
+Julia Fukuyama\textsuperscript{2}
+\\
+\bigskip
+\textbf{1} Department of Mathematics, Indiana University, Bloomington, Indiana, United States of America
+\\
+\textbf{2} Department of Statistics, Indiana University, Bloomington, Indiana, United States of America
+\\
+\bigskip
+
+% Use the asterisk to denote corresponding authorship and provide email address in note below.
+* linjus@iu.edu
+
+\end{flushleft}
+% Please keep the abstract below 300 words
+\section*{Abstract}
+The goal of dimension reduction tools is to construct a low-dimensional representation of high-dimensional data. These tools are employed for a variety of reasons such as noise reduction, visualization, and to lower computational costs. However, there is a fundamental issue that is discussed in other modeling problems that is
+often overlooked in dimension reduction --- overfitting. In the context of other modeling problems, techniques such as feature-selection, cross-validation, and regularization are employed to combat overfitting, but rarely are such precautions taken when applying dimension reduction. Prior applications of the two most popular non-linear dimension reduction methods, t-SNE and UMAP, fail to acknowledge data as a combination of signal and noise when assessing performance. These methods are typically calibrated to capture the entirety of the data, not just the signal. In this paper, we demonstrate the importance of acknowledging noise when calibrating hyperparameters and present a framework that enables users to do so. We use this framework to explore the role hyperparameter calibration plays in overfitting the data when applying t-SNE and UMAP. More specifically, we show previously recommended values for perplexity and n\_neighbors are too small and overfit the noise. We also provide a workflow others may use to calibrate hyperparameters in the presence of noise.
+
+
+% Please keep the Author Summary between 150 and 200 words
+% Use first person. PLOS ONE authors please skip this step. 
+% Author Summary not valid for PLOS ONE submissions.   
+\section*{Author summary}
+In our infinitely complex world, perfect data rid of noise is an unattainable ambition. Hence, our goal is to coerce meaningful information, or the signal, from data inevitably riddled with unwanted, random variation. Advances in technology have allowed us to collect and process biological data of increasing size and complexity, so it is now more important than ever to acknowledge noise in our analyses to ensure random structures are not confused for significant patterns. Many algorithms and ideas have been suggested, some more cognizant of noise than others, but it is still unclear how noise should be handled in various situations. Our experiments, however, indicate typical calibrations of popular analysis methods are inadequately handling noisy, complex biological data. In response, we show and explain how alternate calibrations perform better in the presence of noise and lead to results more faithful to the data. By providing evidence of mishandled noise and presenting solutions, we hope to further the discussion on handling noise in biological data.
+
+\linenumbers
+
+\section*{Introduction}
+In recent years, non-linear dimension reduction techniques have been growing in popularity due to their usefulness when analyzing high-dimensional data. Biologists use these techniques for a variety of visualization and analytic purposes, including exposing cell subtypes \cite{t-SNE example}, checking for batch effects \cite{SVD example}, and visualizing the trajectories of differentiating cells \cite{PHATE}. The most popular non-linear dimension reduction methods are t-distributed Stochastic Neighbor Embedding (t-SNE, \cite{t-SNE}) and Uniform Manifold Approximation and Projection (UMAP, \cite{umap}). Both methods have been applied to various types of data within biology (\cite{t-SNE example}, \cite{UMAP example}, \cite{t-SNE/UMAP example}). 
+
+Since the introduction of t-SNE and UMAP, hyperparameter calibration has proven to be a difficult task. The most crucial hyperparameters, t-SNE's perplexity and UMAP's n\_neighbors, control how large a neighborhood to consider around each point when determining its location in low dimension. Calibration is so troublesome, that perplexity-free versions of t-SNE have been proposed \cite{perplexity-free t-SNE}. It is also an extremely important task, since both methods are known to produce unfaithful results when mishandled \cite{evaluation of DR transcriptomics}. For t-SNE, the original authors suggested perplexities between 5 and 50 \cite{t-SNE}, while recent works have suggested perplexities as large as one percent of the sample size \cite{t-SNE cell}. \cite{perplexity vs kl} studied the inverse relationship between perplexity and Kullback-Leibler divergence to design an automatic calibration process that ``generally agrees with experts' consensus.'' For UMAP, the original authors make no recommendation for optimal values of n\_neighbors, but their implementation defaults to n\_neighbors = 15 \cite{umap}. Manual tuning of perplexity and n\_neighbors requires a deep understanding of the t-SNE and UMAP algorithms, as well as a general knowledge of the data's structure.
+
+The primary purpose of dimension reduction is to simplify data in a way that eliminates superfluous or nonessential information, i.e. noise. Each dimension reduction method does this slightly differently, but most require hyperparameter calibration. For example, the classical linear method, PCA, requires tuning of the number of principal components. A more contemporary method in biology, PHATE (Potential of Heat-diffusion for Affinity-based Trajectory Embedding) \cite{PHATE}, requires tuning of a hyperparameter named diffusion time scale $t$. PHATE represents the structure of the data by computing local similarities then walking through the data using a Markovian random-walk diffusion process. $t$ determines the number of steps taken in a random walk and ``provides a tradeoff between encoding local and global information in the embedding" \cite{PHATE}. Perplexity and n\_neighbors serve the same purpose in their respective algorithms. Hence, we believe t-SNE and UMAP are capable of handling noise, but na\"ive calibrations that disregard noise often result in overfitting.
+
+To assess dimension reduction performance in the presence of noise, we must acknowledge noise during the evaluation process. When the data's structure is available, we can visualize the results and choose the representation that best captures the hypothesized structure. In supervised problems, for example, we look for low-dimensional representations that cluster according to the class labels. For unsupervised problems, however, the structure is often unknown, so we cannot visually assess each representation. In these cases, we must resort to quantitative measures of performance to understand how well the low-dimensional representation reproduces the high-dimensional data. While this strategy is heavily discussed in the machine learning literature, many prior works disregard the possibility of overfitting when quantitatively measuring performance.
+
+In this paper, we present a framework for studying dimension reduction methods in the presence of noise (Section 3). We then use this framework to calibrate t-SNE and UMAP hyperparameters in both simulated and practical examples to illustrate how the disregard of noise leads to miscalibration (Section 4). We also discuss how other researchers may use this framework in their own work (Section 5) and present a case study that walks the reader through the application of the framework to a modern data set (Section 6).
+
+\section*{Background}
+
+\subsection*{t-SNE}
+t-distributed Stochastic Neighbor Embedding (t-SNE, \cite{t-SNE}) is a nonlinear dimension reduction method primarily used for visualizing high-dimensional data. The t-SNE algorithm captures the topological structure of high-dimensional data by calculating directional similarities via a Gaussian kernel. The similarity of point $x_j$ to point $x_i$ is defined by \begin{linenomath}$$p_{j|i} = \frac{\exp(-||x_i - x_j||^2/2\sigma_i^2)}{\sum_{k \neq i} \exp(-||x_i-x_k||^2/2\sigma_i^2)}.$$\end{linenomath} Thus for each point $x_i$, we have a probability distribution $P_i$ that quantifies the similarity of $x_i$ to every other point. The scale of the Gaussian kernel $\sigma_i$ is chosen so that the perplexity of the probability distribution $P_i$, in the information theory sense, is equal to a pre-specified value also named perplexity, \begin{linenomath}$$\textrm{perplexity} = 2^{-\sum_{j \neq i} p_{j|i}\log_2 p_{j|i}.}$$\end{linenomath} Intuitively, perplexity controls how large a neighborhood to consider around each point when approximating the topological structure of the data. As such, it implicitly balances attention to local and global aspects of the data with high values of perplexity placing more emphasis on global aspects. For the sake of computational convenience, t-SNE assumes the directional similarities are symmetric by defining \begin{linenomath}$$p_{ij} = \frac{p_{i|j} + p_{j|i}}{2n}.$$\end{linenomath} The $p_{ij}$ define a probability distribution $P$ on the set of pairs $(i,j)$ that represents the topological structure of the data.
+
+The goal is to then find an arrangement of low-dimensional points $y_1, \hdots, y_n$ whose similarities $q_{ij}$ best match the $p_{ij}$ in terms of Kullback-Leibler divergence, \begin{linenomath}$$D_{KL}(P || Q) = \sum_{i,j} p_{ij} \log \frac{p_{ij}}{q_{ij}}.$$\end{linenomath} The low-dimensional similarities $q_{ij}$ are defined using the t distribution with one degree of freedom, \begin{linenomath}$$q_{ij} = \frac{(1 + ||y_i - y_j||^2)^{-1}}{ \sum_{k \neq l} (1 + ||y_k - y_l||^2)^{-1}}.$$\end{linenomath}
+
+The primary downsides of t-SNE are its inherent randomness, unintuitive results, and sensitivity to hyperparameter calibration. The minimization of KL divergence is done using gradient descent methods with incorporated randomness to avoid stagnating at local minima. As a result, the output differs between runs of the algorithm. Hence, the traditional t-SNE workflow often includes running the algorithm multiple times at various perplexities before choosing the best representation. t-SNE is also known to produce results that are not faithful to the true structure of the data, even when calibrated correctly. For example, cluster sizes and inter-cluster distances aren't always consistent with the original data \cite{Distill}. Such artifacts of the t-SNE algorithm can be confused for significant structures by inexperienced users.
+
+\subsection*{UMAP}
+Uniform Manifold Approximation and Projection (UMAP, \cite{umap}) is another nonlinear dimension reduction method that has been rising in popularity. Originally introduced as a more computationally efficient alternative to t-SNE, UMAP is a powerful tool for visualizing high-dimensional data that requires user calibration. While its underlying ideology is completely different from that of t-SNE, the UMAP algorithm is very similar architecturally to the t-SNE algorithm --- high-dimensional similarities are computed and the resulting representation is the set of low-dimensional points whose low-dimensional similarities best match the high-dimensional similarities. See \cite{umap} for details. The largest difference is UMAP's default initialization process. UMAP uses Laplacian eigenmaps to initialize the low-dimensional representation, which is then adjusted to minimize the cost function. Most t-SNE implementations use PCA during the initialization process. The initialization process is the primary benefit of the default implementation of UMAP, but t-SNE and UMAP have been shown to perform similarly with identical initializations \cite{t-SNE/UMAP example}. Modern implementations of both algorithms are also comparable in speed.
+
+UMAP shares similar disadvantages with t-SNE. It can create unfaithful representations that require experience to interpret and is sensitive to hyperparameter calibration \cite{understanding UMAP}.
+
+\section*{Methods}
+
+\subsection*{Dimension Reduction Framework}
+Prior works quantitatively measure how well low-dimensional representations match the high-dimensional data. However, if we consider data as a composition of signal and noise, we must not reward capturing the noise. Therefore, we should be comparing the low-dimensional representation against the signal underlying our data, rather than the entirety of the data.
+
+Suppose the underlying signal of our data is described by an $r$-dimensional matrix $Y \in \mathbb{R}^{n \times r}$. In the context of dimension reduction, the signal is often lower dimension than the original data. Let $p \geq r$ be the dimension of the original data set, and let $\textrm{Emb}:\mathbb{R}^r \to \mathbb{R}^p$ be the function that embeds the signal in data space. Define $Z = \textrm{Emb}(Y)$ to be the signal embedded in data space. We then assume the presence of random error. The original data can then be modeled by $Z + \epsilon \textrm{ for } \epsilon \sim N_p(0, \Sigma)$. The dimension reduction method $\varphi$ is applied to $Z + \epsilon$ to get a low-dimensional representation $X \in \mathbb{R}^{n \times q}$. See Fig~\ref{fig1}.
+
+\begin{figure}[!h]
+\caption{{\bf Dimension reduction framework.}
+\hl{$Z + \epsilon$ represents the data constructed from an (often lower-dimensional) signal $Y$ embedded in data space. $X$ is the lower-dimensional embedding of $Z + \epsilon$ outputted by a DR technique. $X$ should be constructed to preserve $Y$, rather than $Z + \epsilon$.}}
+\label{fig1}
+\end{figure}
+
+\subsection*{Reconstruction Error Functions}
+The remaining piece is a procedure for measuring dimension reduction performance. Suppose we have a reconstruction error function $f(D_1, D_2)$ that quantifies how well the data set $D_2$ represents the data set $D_1$. Prior works like \cite{evaluation of DR transcriptomics}, \cite{t-SNE cell} , \cite{large DR unreliable}, and \cite{quantitative survey} use various reconstruction error functions to quantify performance; only, they study $f(Z + \epsilon, X)$ to measure how well the constructed representation $X$ represents the original data $Z + \epsilon$. We argue it is more appropriate to compare $X$ against the signal $Y$ by examining $f(Y, X)$.
+
+Prior works in dimension reduction have suggested various quantitative metrics for measuring dimension reduction performance. In line with recent discussions of perplexity (\cite{t-SNE cell} and \cite{large DR unreliable}), we employ two different metrics --- one that measures local performance and one that measures global performance.
+
+For local performance, we use a nearest-neighbor type metric called trustworthiness \cite{trustworthiness}. Let $n$ be the sample size and $r(i,j)$ the rank of point $j$ among the $k$ nearest neighbors of point $i$ in high dimension. Let $U_k(i)$ denote the set of points among the $k$ nearest neighbors of point $i$ in low dimension, but not in high dimension. Then \begin{linenomath}$$f_{trust}(D_1, D_2) = 1 - \frac{2}{nk(2n - 3k - 1)}\sum_{i=1}^n \sum_{j \in U_k(i)} \left[ r(i,j) - k \right].$$\end{linenomath} For each point, we are measuring the degree of intrusion into its $k$-neighborhood during the dimension reduction process. The quantity is then re-scaled, so that trustworthiness falls between 0 and 1 with higher values favorable. Trustworthiness is preferable to simply measuring the proportion of neighbors preserved because it's more robust to the choice of $k$. For very large values of $n$, we can get an estimate by only checking a random subsample of points $i_1, \hdots, i_m$. In this case, \begin{linenomath}$$f_{trust}(D_1, D_2) \approx 1 - \frac{2}{mk(2n - 3k - 1)}\sum_{l=1}^m \sum_{j \in U_k(i_l)} \left[ r(i_l,j) - k \right].$$\end{linenomath} Local performance is the primary concern when applying t-SNE and UMAP, so our experiments focus on maximizing trustworthiness.
+
+For global performance, we use Shepard goodness \cite{quantitative survey}. Shepard goodness is the Spearman correlation, a rank-based correlation, between high and low-dimensional inter-point distances, \begin{linenomath}$$f_\textrm{Shep}(D_1, D_2) = \sigma_\textrm{Spearman}(||z_i - z_j||, ||\varphi(z_i) - \varphi(z_j)||).$$\end{linenomath} Again for very large values of $n$, we can get an approximation by calculating the correlation between inter-point distances of a random subsample.
+
+\subsection*{Using this framework}
+When using this framework to model examples, three components must be specified: $Z + \epsilon$, $Y$, and $\textrm{Emb}()$. These elements describe the original data, the underlying signal, and the embedding of the signal in data space, respectively. When simulating examples, it's natural to start with the underlying signal $Y$ then construct $Z + \epsilon$ by attaching extra dimensions and adding Gaussian noise. The $\textrm{Emb}()$ function is then given by $\textrm{Emb}(y) = (y,0,\hdots,0)$ so that
+\begin{linenomath}$$Z + \epsilon = \begin{bmatrix}
+Y & \vert & 0
+\end{bmatrix} + \epsilon.$$\end{linenomath}
+
+Practical examples are more tricky because we do not have the luxury of first defining $Y$. Instead, we are given the data $Z + \epsilon$ from which we must extract $Y$, or at least our best estimate. This process is dependent on the specifics of the problem and should be based on a priori knowledge of the data. If there is no specific signal of interest, a more general approach can be taken. We used a PCA projection of the data to represent the signal, $Y = \textrm{PCA}_r(Z + \epsilon)$, where $r$ is the dimension of the projection. For a reasonably chosen $r$, we expect the first $r$ principal components to contain most of the signal, while excluding most of the noise. Another advantage to using PCA is it gives rise to a natural $\textrm{Emb}()$ function --- the PCA inverse transform. If $Y$ is centered, then we may define \begin{linenomath}$$Z = \textrm{invPCA}_r(Y) = (Z + \epsilon)V_rV_r^T,$$\end{linenomath} where $V_r \in \mathbb{R}^{p \times r}$ contains the first $r$ eigenvectors of $(Z+\epsilon)^T(Z+\epsilon)$ as column vectors.
+
+\section*{Results}
+
+\subsection*{Simulated Examples}
+We first looked at simulated examples with explicitly defined signal structures -- three low-dimensional examples (Fig~\ref{fig2}) and one high-dimensional example. The links example and the high-dimensional example are explored here. See Table 1 and \nameref{S1} for the other simulated examples.
+
+\begin{figure}[!h]
+\caption{{\bf Low-dimensional simulated examples.}
+\hl{Visualizations of the signals used to simulate data.}}
+\label{fig2}
+\end{figure}
+
+\subsubsection*{Links Data Set}
+For the links example, the signal $Y$ consisted of two interlocked circles, each containing 250 points, embedded in three dimensions. $Z + \epsilon$ was constructed by adding seven superfluous dimensions and isotropic Gaussian noise. Various degrees of noise were tested ($sd = 0.5, 1, 1.5, 2, 2.5, 3$).
+
+t-SNE was run using the $R$ package \textit{Rtsne} \cite{Rtsne} at varying perplexities. For each perplexity, the algorithm was run 40 times to mimic the ordinary t-SNE workflow. If the distinction between signal and noise was disregarded, a plot of $f_\textrm{trust}(Z + \epsilon, X)$ vs. perplexity could be used to maximize local performance. To avoid overfitting the noise, a plot of $f_\textrm{trust}(Y, X)$ vs. perplexity should be used instead. See Fig~\ref{fig3} for examples of these plots for the $sd = 1$ case. Both plots depict an increase in local performance followed by a decrease as perplexity increases. This cutoff point, however, varies between the two plots. When comparing against the original data, the trustworthiness-maximizing representation was constructed with a perplexity of 40, which is consistent with the original authors' suggestion of 5 to 50 for perplexity \cite{t-SNE}. When comparing against the signal, the trustworthiness-maximizing representation was constructed with a perplexity of 80.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness vs. perplexity (links $sd = 1$).}
+\hl{t-SNE outputs were calculated with varying perplexities. Local performance was measured via trustworthiness. The trustworthiness-maximizing perplexity was 40 when comparing against the original data, while the trustworthiness-maximizing perplexity was 80 when comparing against just the signal.}}
+\label{fig3}
+\end{figure}
+
+With the signal structure known, we are also able to visually assess the trustworthiness-maximizing representations. Fig~\ref{fig4} shows the trustworthiness-maximizing representations for the $sd = 1$ case. Notice the larger perplexity was able to successfully separate the circles in the presence of noise, while the smaller perplexity was not. By using the signal as the frame of reference, our framework correctly rewarded the representation that was able to successfully separate the two links.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness-maximizing representations (links $sd = 1$).}
+\hl{Trustworthiness-maximizing t-SNE outputs. Comparing against the signal resulted in a representation that better captured the two links.}}
+\label{fig4}
+\end{figure}
+
+The same pattern held true for other levels of noise. The optimal perplexity was consistently larger when comparing against the signal, rather than the original data (Fig~\ref{fig5}).
+
+\begin{figure}[!h]
+\caption{{\bf Optimal perplexity (links).}
+\hl{The experiment was repeated at various levels of noise. For each level of noise, the trustworthiness-maximizing perplexity was recorded when comparing against the original data and the signal. The optimal perplexity was consistently greater when comparing against the signal.}}
+\label{fig5}
+\end{figure}
+
+These results suggest larger perplexities perform better in the presence of noise, both quantitatively and qualitatively. We hypothesize t-SNE tends to overfit the noise when the perplexity is too small. Intuitively, small perplexities are more affected by slight perturbations of the data when only considering small neighborhoods around each point, leading to unstable representations. Conversely, larger perplexities lead to more stable representations that are more robust to noise.
+
+\subsubsection*{High-Dimensional Clusters}
+The signal $Y$ consisted of seven Gaussian clusters, each containing 50 points, in seven dimensions. The clusters were drawn from multivariate normal distributions with mean $10e_i$ and random diagonal covariance matrices, where $e_i$ is the $i^\textrm{th}$ standard basis vector. The data set $Z + \epsilon$ was constructed from $Y$ by adding 53 superfluous dimensions and isotropic Gaussian noise to all 60 dimensions. Various degrees of noise were tested $(sd = 2, 2.5, 3, 3.5, 4, 4.5)$.
+
+When $sd = 3$, local performance peaked at different perplexities when changing the frame of reference (Fig~\ref{fig6}). When comparing against the original data, trustworthiness was maximized at a perplexity of 55. When comparing against the signal, trustworthiness was maximized at a perplexity of 60. See Fig~\ref{fig7} for the trustworthiness-maximizing representations. Visually, both representations maintain the original clustering to some extent, but the higher-perplexity representation shows less mixing between the clusters and had a larger average silhouette width (0.178) than the lower-perplexity representation (0.121). This suggests the higher-perplexity representation better maintained the original clustering.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness vs. perplexity (high-dimensional clusters $sd = 3$).}
+\hl{t-SNE outputs were calculated with varying perplexities. Local performance was measured via trustworthiness. The trustworthiness-maximizing perplexity was 55 when comparing against the original data, while the trustworthiness-maximizing perplexity was 60 when comparing against just the signal.}}
+\label{fig6}
+\end{figure}
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness-maximizing representations (high-dimensional clusters $sd = 3$).}
+\hl{Trustworthiness-maximizing t-SNE outputs. Both outputs depict a similar clustering.}}
+\label{fig7}
+\end{figure}
+
+Fig~\ref{fig8} shows the optimal perplexities for different levels of noise. Again, the trustworthiness-maximizing perplexity was larger when comparing against the signal for all levels of noise.
+
+\begin{figure}[!h]
+\caption{{\bf Optimal perplexity (high-dimensional clusters).}
+\hl{The experiment was repeated at various levels of noise. For each level of noise, the trustworthiness-maximizing perplexity was recorded when comparing against the original data and the signal. The optimal perplexity was consistently greater when comparing against the signal.}}
+\label{fig8}
+\end{figure}
+
+\subsection*{Practical Examples}
+In addition to simulated data sets, we looked at three practical data sets: a single-cell RNA sequencing data set \cite{scRNA data}, a cytometry by time-of-flight (CyTOF) data set \cite{CyTOF data}, and a microbiome data set \cite{enterotype data}. For each data set, we compared the optimal perplexity for locally replicating the original data versus the estimated signal. We explore the scRNA-seq data set in detail here. The results of the other two practical examples can be found in Table 1. The details can be found in \nameref{S1}.
+
+The scRNA-seq data set was generated from induced pluripotent stem cells collected from three different individuals. The original data includes 864 units and 19,027 readings per unit. To process this zero-inflated count data, columns containing a large proportion of 0's (20\% or more) were removed before a log transformation was applied. This step reduced the number of dimensions to 5,431. A PCA pre-processing step further reduced the number of dimensions to 500, which still retained 88\% of the variance of the log-transformed data. Hence, the processed data set consisted of 864 observations in 500 dimensions, $Z + \epsilon \in \mathbb{R}^{864 \times 500}$. To determine the dimensionality of the signal, we drew a scree plot (Fig~\ref{fig9}). Note, the first eigenvalue (2359.357) was cut to fit the plot. A conservative estimate is five dimensions, so $Y$ was extracted by taking the first five principal components, $Y = \textrm{PCA}_5(Z + \epsilon)$. We computed the t-SNE representations for perplexities ranging from 10 to 280. For each perplexity, 20 different t-SNE representations were computed.
+
+\begin{figure}[!h]
+\caption{{\bf Scree plot for scRNA-seq data set}.
+\hl{A PCA projection was used to extract the signal. To determine the appropriate number of dimensions for the projection, a scree plot was drawn.}}
+\label{fig9}
+\end{figure}
+
+As with the simulated examples, there is a difference in trend when switching the frame of reference (Fig~\ref{fig10}). When compared against the original data, trustworthiness is maximized at a perplexity of 40, which is consistent with \cite{t-SNE}'s recommendation of 5 to 50. When compared against the signal, trustworthiness is maximized at a larger perplexity of 120, reinforcing the hypothesis that lower values of perplexity may be overfitting the noise.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness vs. perplexity for r = 5 (scRNA-seq).}
+\hl{t-SNE outputs were calculated with varying perplexities. Local performance was measured via trustworthiness. The trustworthiness-maximizing perplexity was 40 when comparing against the original data, while the trustworthiness-maximizing perplexity was 120 when comparing against just the signal.}}
+\label{fig10}
+\end{figure}
+
+Visual inspection of the trustworthiness-maximizing representations reveals the effect of increasing the perplexity (Fig~\ref{fig11}). A hierarchical clustering of the high-dimensional data was computed, then projected onto the trustworthiness-maximizing representations. Both representations depict a similar structure, but the relative positioning of clusters differs. For example, the Class 1 cluster is the rightmost cluster in the perplexity = 40 representation, while the Class 5 cluster is the rightmost cluster in the perplexity = 120 representation. Furthermore, the left-to-right order of the Class 3, Class 8, and Class 9 clusters is reversed in both representations. Although relative positioning of clusters in t-SNE representations is often considered arbitrary, especially for low perplexities, the perplexity = 120 representation exhibits superior global performance. The perplexity = 40 representation has a Shepard goodness of 0.521 while the perplexity = 120 representation has a Shepard goodness of 0.788, suggesting the cluster positioning of the perplexity = 120 representation is more accurate than the cluster positioning of the perplexity = 40 representation.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness-maximizing representations for r = 5 (scRNA-seq).}
+\hl{Trustworthiness-maximizing t-SNE outputs. Both outputs depict a similar clustering with slightly varying cluster positioning. The perplexity = 40 representation depicts tighter clustering, but is outperformed in metrics measuring both local and global performance, suggesting the over-clustering and cluster positioning are misleading.}}
+\label{fig11}
+\end{figure}
+
+In terms of local structure, the Class 3 and Class 7 clusters are better preserved in the perplexity = 40 representation, while the Class 12 cluster is better preserved in the perplexity = 120 representation. The perplexity = 40 representation also suggests the Class 2 cluster could potentially contain two separate clusters, but this is not consistent with the high-dimensional data according to the dendrogram and higher-order clusterings. The perplexity = 120 representation does not mislead in this way. Overall, the lower perplexity leads to tighter-knit clusters as expected. However, further investigation reveals the over-clustering may be unfaithful to the original data.
+
+If we, instead, decide to be more conservative and use the first 10 principal components to represent the signal, we still see a similar trend (Fig~\ref{fig12}, ~\ref{fig13}). Trustworthiness still increases then decreases with perplexity. When compared against the original data, trustworthiness is maximized at a perplexity of 50 (Note the optimal perplexity when compared against the original data differed between the two experiments, even though it should theoretically be independent of the chosen signal dimension. This is due to the inherent randomness of the t-SNE algorithm). When compared against the signal, trustworthiness is maximized at a perplexity of 60. By including five extra principal components in the signal, we're assuming the data contains less noise, allowing the model to be more aggressive during the fitting process.
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness vs. perplexity for r = 10 (scRNA-seq).}
+\hl{t-SNE outputs were calculated with varying perplexities. Local performance was measured via trustworthiness. The trustworthiness-maximizing perplexity was 50 when comparing against the original data, while the trustworthiness-maximizing perplexity was 60 when comparing against just the signal.}}
+\label{fig12}
+\end{figure}
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness-maximizing representations for r = 10 (scRNA-seq).}
+\hl{Trustworthiness-maximizing t-SNE outputs. Both outputs depict a similar clustering with slightly varying cluster positioning.}}
+\label{fig13}
+\end{figure}
+
+\subsection*{Summary of Results}
+See Table 1 for a summary of the results. $n$, $p$, and $r$ represent the sample size, dimension of the (post PCA-processed) data, and dimension of the extracted signal, respectively. The optimal perplexity when comparing against the signal was greater than the optimal perplexity when comparing against the original data for every example.
+
+\begin{table}[!ht]
+\centering
+\caption{{\bf Summary of Results.}
+\hl{Dimensionality details and optimal perplexity for each data set.}}
+\begin{tabular}{@{}llllll@{}}
+\toprule 
+ & & & & \multicolumn{2}{c}{Optimal Perplexity} \\
+\cmidrule{5-6}
+Data Set & $n$ & $p$ & $r$ & signal + noise & signal \\
+\midrule 
+Links \cite{Distill} & 500 & 10 & 3 & 40 & 80 \\
+Trefoil \cite{Distill} & 500 & 10 & 3 & 35 & 100 \\
+Mammoth \cite{understanding DR} & 500 & 10 & 3 & 30 & 80 \\
+High-Dimensional Clusters & 210 & 60 & 10 & 55 & 60 \\
+scRNA-seq \cite{scRNA data} & 864 & 500 & 5 & 40 & 120 \\
+scRNA-seq \cite{scRNA data} & 864 & 500 & 10 & 50 & 60 \\
+CyTOF \cite{CyTOF data} & 5,000 & 30 & 5 & 50 & 110 \\
+CyTOF \cite{CyTOF data} & 5,000 & 30 & 8 & 45 & 65 \\
+Microbiome \cite{enterotype data} & 280 & 66 & 5 & 50 & 90 \\
+Microbiome \cite{enterotype data} & 280 & 66 & 8 & 60 & 85 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{UMAP and n\_neighbors}
+If n\_neighbors functions similarly to perplexity, we'd expect small values of n\_neighbors to overfit the data as well. An identical experiment was run using the Python package \textit{umap-learn} \cite{umap} on the scRNA-seq data. n\_neighbor values ranging from 10 to 300 were tested and an n\_neighbors value of 190 maximized trustworthiness when comparing against the original data, but an n\_neighbors value of 300 maximized trustworthiness when comparing against the signal (Fig~\ref{fig14}).
+
+\begin{figure}[!h]
+\caption{{\bf Trustworthiness vs. n\_neighbors for UMAP (scRNA-seq).}
+\hl{UMAP outputs were calculated with varying n\_neighbors values. Local performance was measured via trustworthiness. The trustworthiness-maximizing n\_neighbors was 190 when comparing against the original data, while the trustworthiness-maximizing n\_neighbors was 300 when comparing against just the signal.}
+\label{fig14}}
+\end{figure}
+
+\section*{Application}
+To apply this framework in practice, one must decide how to extract the signal from the data. The signal should include the features of the data one desires to retain throughout the dimension reduction process. When using a PCA projection to serve as the signal, one could draw a scree plot or employ a component selection algorithm such as parallel analysis \cite{parallel analysis} to determine the dimension of the signal.
+
+With a signal constructed, it remains to compute t-SNE/UMAP outputs at varying perplexities/n\_neighbors. It's recommended that at least a couple outputs are computed for each perplexity/n\_neighbors to account for randomness in the algorithms. For each output, one must calculate the trustworthiness and Shepard goodness with respect to the signal. From there, one can choose the representation with the desired balance of local and global performance. A summary is given in Algorithm 1. Sample code is available at \url{https://github.com/JustinMLin/DR-Framework/}.
+
+\begin{algorithm}[!ht]
+\caption{Measuring Performance in the Presence of Noise}\label{algo1}
+\begin{algorithmic}[1]
+\Require original data $Z + \epsilon$, perplexities $\{p_1, \hdots, p_m\}$ to test, and neighborhood size $k$
+\State $Y \Leftarrow \textrm{PCA}_r(Z + \epsilon)$
+\State $\textrm{perplexities} \Leftarrow \{p_1, \hdots, p_m\}$
+\For {perplexity in perplexities}
+	\Loop
+		\State $X\_tsne \Leftarrow \textrm{Rtsne}(Z + \epsilon, \textrm{perplexity})$
+		\State $trust \Leftarrow \textrm{trustworthiness}(Y, X\_tsne, k)$
+		\State $shep \Leftarrow \textrm{Shepard\_goodness}(Y, X\_tsne)$
+	\EndLoop
+\EndFor
+\State Plot trustworthiness and Shepard goodness values
+\State Choose output with desired balance of local and global performance
+\end{algorithmic}
+\end{algorithm}
+
+It is worth noting that computational barriers may arise, especially for very large data sets. To alleviate such issues, trustworthiness and Shepard goodness can be approximated by subsampling before calculation. Furthermore, t-SNE and UMAP are generally robust to small changes in perplexity and n\_neighbors, so checking a handful of values is sufficient. If computing multiple low-dimensional representations is the limiting factor, one can try calibrating the hyperparameters for a subsample before extending to the full data set. \cite{subsample t-SNE} found that embedding a $\rho$-sample, where $\rho \in (0,1]$ is the sampling rate, with perplexity $\textrm{Perp}'$ gives a visual impression of embedding the original data with perplexity $\textrm{\textrm{Perp}} = \frac{\textrm{Perp}'}{\rho}$. With these concessions, applying this framework to calibrate hyperparameters should be feasible for data sets of any size.
+
+\section*{Case Study}
+To demonstrate how one might apply this framework, we walk through a detailed case study on a modern scRNA-seq data set.
+
+\subsection*{Data}
+Cryopreserved human peripheral blood mononuclear cells (PBMCs) from a healthy female donor aged 25 were obtained by 10x Genomics from AllCells. Granulocytes were removed by cell sorting, followed by nuclei isolation. Paired ATAC and Gene Expression libraries were generated from the isolated nuclei and sequenced. See \cite{BPCells data} for details.
+
+\subsection*{Pre-Processing}
+Pre-processing was completed using the $R$ package \textit{BPCells} and the steps followed the provided tutorial \cite{BPCells tutorial} closely. Low quality cells (those that did not meet the required number of RNA reads, the required number of ATAC reads, or TSS Enrichment cutoffs) were filtered out before a matrix normalization was applied. The cleaned dataset contained 2,600 cells and 1,000 genes. The number of dimensions was then reduced to 500 using PCA, which retained 86\% of the original variance. The processed data set to be analyzed contained 2,600 observations in 500 dimensions, $\mathbb{Z + \epsilon} \in \mathbb{R}^{2,600 \times 500}$.
+
+\subsection*{Determining the Signal}
+To determine the number of signal dimensions, a scree plot was drawn (Fig~\ref{fig15}). The first eigenvalue was approximately 188 but was trimmed to fit the plot. Four dimensions, a relatively conservative estimate, were chosen to represent the signal, $Y \in \mathbb{R}^{2,600 \times 4}$.
+
+\begin{figure}[!h]
+\caption{{\bf Scree plot for PBMC data set}.
+\hl{A PCA projection was used to extract the signal. To determine the appropriate number of dimensions for the projection, a scree plot was drawn.}}
+\label{fig15}
+\end{figure}
+
+\subsection*{Results}
+UMAP was applied with multiple values of n\_neighbors. 20 representations were computed for each value, and trustworthiness was measured with respect to both the entire data and the signal. Trustworthiness was maximized at a n\_neighbors value of 50 when comparing against the entire data and a value of 70 when comparing against the signal (Fig~\ref{fig16}). Cell types (B, T, Monocyte, NK, Dendritic cell, CD8 T) were assigned to each cluster by exploring marker genes (Fig~\ref{fig17}). See \cite{BPCells tutorial} for details.
+
+\begin{figure}[!h]
+\centering
+\caption{{\bf Trustworthiness vs. n\_neighbors for UMAP (PBMC).}
+\hl{UMAP outputs were calculated with varying n\_neighbors values. Local performance was measured via trustworthiness. The trustworthiness-maximizing n\_neighbors was 50 when comparing against the original data, while the trustworthiness-maximizing n\_neighbors was 70 when comparing against just the signal.}}
+\label{fig16}
+\end{figure}
+
+\begin{figure}[!h]
+\caption{{\bf Cell types (PBMC).}
+\hl{UMAP representations for different values of n\_neighbors. The cell types were assigned through study of known marker genes. The n\_neighbors = 50 and n\_neighbors = 70 representations did the best job separating the different cell types. The n\_neighbors = 50 representation is more tightly clustered than the n\_neighbors = 70 representation. The relative positioning of the NK and CD8 T cells differs between the n\_neighbors = 50 and n\_neighbors = 70 representations.}}
+\label{fig17}
+\end{figure}
+
+\subsection*{Analysis}
+In all three representations, the primary division of cell types is between monocytes and some of the dendritic cells vs. the T, B, CD8 T, and NK cells. In the default UMAP representation, the B cells form a cluster that is quite distinct from the T, CD8 T, and NK cells. As we increase n\_neighbors to 50 and 70, the B cell cluster moves closer to the T/CD8 T/NK cell cluster. The closer proximity of the B cells to the T, CD8 T, and NK cells in the n\_neighbors = 70 representation is consistent with the over-arching categorization of T, CD8 T, NK, and B cells as lymphocytes, as opposed to monocytes.
+
+Perhaps a starker difference between the representations concerns the dendritic cells (DCs). In the n\_neighbors = 15 and n\_neighbors = 50 representations, there are three distinct clusters of DCs, whereas there are only two in the n\_neighbors = 70 representation (Fig~\ref{fig18}). Principal component analysis of the DCs alone suggests that the DCs are either two clusters, one of which is more diffuse than the other, or three clusters, two of which are fairly close together (Fig~\ref{fig19}). Standard metrics for determining the number of clusters suggest the same. The silhouette width metric suggests two clusters (Fig S15 in \nameref{S1}), while the gap statistic suggests three (Fig S16 in \nameref{S1}). However, the three-cluster solution given by k-means and visual inspection of the principal components plot does not align with the three clusters in the n\_neighbors = 15 or n\_neighbors = 50 representation. The green and orange clusters are represented faithfully, but the third, more diffuse, purple cluster is split across two DC clusters in the n\_neighbors = 15 and n\_neighbors = 50 representations (Fig~\ref{fig20}). The degree of separation is lesser in the n\_neighbors = 70 representation. Therefore, the n\_neighbors = 15 and n\_neighbors = 50 representations inaccurately represent the dendritic cells in a way that the n\_neighbors = 70 representation does not.
+
+\begin{figure}[!h]
+\caption{{\bf Plot of dendritic cells (PBMC).}
+\hl{Dendritic cells (DC) extracted from the UMAP representations constructed with different values of n\_neighbors. The n\_neighbors = 15 and n\_neighbors = 50 representations show two clusters, while the n\_neighbors = 70 representation may be showing three clusters.}}
+\label{fig18}
+\end{figure}
+
+\begin{figure}[!h]
+\caption{{\bf PCA applied to dendritic cells (PBMC).}
+\hl{PCA was applied to the subset of dendritic cells. The first two principal components seem to imply the dendritic cells belong to three different clusters. The points were assigned according to a three-cluster k-means clustering upon the PCA projection. }}
+\label{fig19}
+\end{figure}
+
+\begin{figure}[!h]
+\caption{{\bf Dendritic cells colored according to PCA projection (PBMC).}
+\hl{Dendritic cells (DC) extracted from the UMAP representations colored according to the k-means clustering upon the PCA projection of the dendritic cells. The n\_neighbors = 70 representation separated the purple points the least among the three representations.}}
+\label{fig20}
+\end{figure}
+
+\section*{Discussion}
+We have illustrated the importance of acknowledging noise when performing dimension reduction by studying the roles perplexity and n\_neighbors play in overfitting data. When using the original data to calibrate perplexity, our experiments agreed with perplexities previously recommended. When using the signal, however, our experiments indicated that larger perplexities perform better. Low perplexities/n\_neighbors lead to overly-flexible models that are heavily impacted by the presence of noise, while higher perplexities/n\_neighbors exhibit better performance due to increased stability. These considerations are especially important when working with heavily noised data, which are especially prevalent in the world of single-cell transcriptomics \cite{noise in single-cell data}.
+
+We have also presented a framework for modeling dimension reduction problems in the presence of noise. This framework can be used to study other hyperparameters and their relationships with noise. In the case when a specific signal structure is desired, this framework can be used to determine which dimension reduction method best preserves the desired structure. Further works should explore alternative methods for extracting the signal in a way that preserves the desired structure.
+
+\section*{Supporting information}
+
+% Include only the SI item label in the paragraph heading. Use the \nameref{label} command to cite SI items in the text.
+\paragraph*{S1 Appendix.}
+\label{S1}
+{{\bf \hl{Supporting information file, including extra figures.}} (PDF)}
+
+\nolinenumbers
+
+% Either type in your references using
+% \begin{thebibliography}{}
+% \bibitem{}
+% Text
+% \end{thebibliography}
+%
+% or
+%
+% Compile your BiBTeX database using our plos2015.bst
+% style file and paste the contents of your .bbl file
+% here. See http://journals.plos.org/plosone/s/latex for 
+% step-by-step instructions.
+% 
+\begin{thebibliography}{10}
+
+\bibitem{t-SNE example}
+Amir ED, Davis KL, Tadmor MD, Simonds EF, Levine JH, Bendall SC, et al.
+\newblock viSNE enables visualization of high dimensional single-cell data and reveals phenotypic heterogeneity of leukemia.
+\newblock Nat Biotechnology. 2013 May 19;31:545-52.
+
+\bibitem{SVD example}
+Alter O, Brown PO, Botstein D.
+\newblock Singular value decomposition for genome-wide expression data processing and modeling.
+\newblock PNAS. 2000 Aug 29;97(18):10101-6.
+
+\bibitem{PHATE}
+Moon KR, van Dijk D, Wang Z, Gigante S, Burkhardt DB, Chen WS, et al.
+\newblock Visualizing structure and transitions in high-dimensional biological data.
+\newblock Nat Biotechnology. 2019 Dec 3;37:1482-92.
+
+\bibitem{t-SNE}
+van der Maaten L, Hinton G.
+\newblock Visualizing data using t-SNE.
+\newblock JLMR. 2008 Nov 8;9:2579-605.
+
+\bibitem{umap}
+McInnes L, Healy J, Melville J.
+\newblock UMAP: Uniform Manifold Approximation and Projection for dimension reduction.
+\newblock arXiv:1802.03426v3 [Preprint]. 2020. Available from https://arxiv.org/abs/1802.03426.
+
+\bibitem{UMAP example}
+Becht E, McInnes L, Healy J, Dutertre CA, Kwok IWH, Ng LG, et al.
+\newblock Dimensionality reduction for visualizing single-cell data using UMAP.
+\newblock Nat Biotechnology. 2019 Dec 3;37:28-44.
+
+\bibitem{t-SNE/UMAP example}
+Kobak D, Linderman GC.
+\newblock Initialization is critical for preserving global data structure in both t-SNE and UMAP.
+\newblock Nat Biotechnology. 2021 Feb 1;39:156-7.
+
+\bibitem{perplexity-free t-SNE}
+Crecchi F, de Bodt C, Verleysen M, Lee JA, Bacciu D.
+\newblock Perplexity-free parametric t-SNE.
+\newblock arXiv:2010.01359v1 [Preprint]. 2020. Available from https://arxiv.org/abs/2010.01359.
+
+\bibitem{evaluation of DR transcriptomics}
+Huang H, Wang Y, Rudin C, Browne EP.
+\newblock Towards a comprehensive evaluation of dimension reduction methods for transcriptomic data visualization.
+\newblock Commun Biol. 2022 July 19;5(1):719.
+
+\bibitem{t-SNE cell}
+Kobak D, Berens P.
+\newblock The art of using t-SNE for single-cell transcriptomics.
+\newblock Nat Communications. 2019 Nov 28;10:5416.
+
+\bibitem{perplexity vs kl}
+Cao Y, Wang L. 
+\newblock Automatic selection of t-SNE perplexity.
+\newblock arXiv:1708.03229.v1 [Preprint]. 2017. Available from https://arxiv.org/abs/1708.03229.
+
+\bibitem{diffusion maps}
+Coifman RR, Lagon S.
+\newblock Diffusion maps.
+\newblock Applied and Computational Harmonic Analysis. 2006 July;21(1):5-30.
+
+\bibitem{Distill}
+Wattenberg M, Vi\'egas F, Johnson I.
+\newblock How to Use t-SNE Effectively.
+\newblock Distill. 2016. Available from https://distill.pub/2016/misread-tsne/.
+
+\bibitem{understanding UMAP}
+Coenen A, Pearce A for Google PAIR.
+\newblock Understanding UMAP.
+\newblock Available from https://pair-code.github.io/understanding-umap/.
+
+\bibitem{large DR unreliable}
+Chari T, Pachter L.
+\newblock The specious art of single-cell genomics.
+\newblock PLoS Computational Biology. 2017 Aug 17;19(8): e1011288.
+
+\bibitem{quantitative survey}
+Espadoto M, Martins RM, Kerren A, Hirata NST, Telea AC.
+\newblock Towards a quantitative survey of dimension reduction techniques.
+\newblock  IEEE Transactions on Visualization and Computer Graphics. 2021 Mar;27(3):2153-73.
+
+\bibitem{trustworthiness}
+Venna J, Kaski S.
+\newblock Visualizing gene interaction graphs with local multidimensional scaling.
+\newblock ESANN. 2006 Apr 26-28.
+
+\bibitem{understanding DR}
+Wang Y, Huang H, Rudin C, Shaposhnik Y.
+\newblock Understanding how dimension reduction tools work: An empirical approach to deciphering t-SNE, UMAP, TriMap, and PaCMAP for data visualization.
+\newblock JMLR. 2021;22:1-73.
+
+\bibitem{Rtsne}
+Krijthe JH.
+\newblock Rtsne: T-Distributed Stochastic Neighbor Embedding using a Barnes-Hut implementation.
+\newblock Available from https://github.com/jkrijthe/Rtsne.
+
+\bibitem{scRNA data}
+Tung PY, Blischak JD, Hsiao CJ, Knowles DA, Burnett JE, Pritchard JK, et al.
+\newblock Batch effects and the effective design of single-cell gene expression studies.
+\newblock Scientific Reports. 2017 Jan 3;7:39921.
+
+\bibitem{CyTOF data}
+Strauss-Albee DM, Fukuyama J, Liang EC, Yao Y, Jarrell JA, Drake AL, et al.
+\newblock Human NK cell repertoire diversity reflects immune experience and correlates with viral susceptibility.
+\newblock Science Translational Medicine. 2015 July 22;7(297):297.
+
+\bibitem{enterotype data}
+Arumugam M, Raes J, Pelletier E, Paslier DL, Yamada T, Mende DR, et al.
+\newblock Enterotypes of the human gut microbiome.
+\newblock Nature. 2011 Apr 20;473:174-80.
+
+\bibitem{parallel analysis}
+Horn JL.
+\newblock A rationale and test for the number of factors in factor analysis.
+\newblock Psychometrika. 1965 June;30:179-85.
+
+\bibitem{subsample t-SNE}
+Skrodzki M, Chaves-de-Plaza N, Hildebrandt K, H\"ollt T, Eisemann E.
+\newblock Tuning the perplexity for and computing sampling-based t-SNE embeddings.
+\newblock arXiv:2308.15513 [Preprint]. 2023 Aug 29. Available from https://arxiv.org/abs/2308.15513.
+
+\bibitem{BPCells data}
+Cell Ranger ARC 2.0.0.
+\newblock PBMC from a healthy donor - granulocytes removed through cell sorting (3k).
+\newblock 10x Genomics. 2021 May 5.
+
+\bibitem{BPCells tutorial}
+Parks B.
+\newblock BPCells: single cell counts matrices to PCA.
+\newblock 2024. Available from https://bnprks.github.io/BPCells.
+
+\bibitem{noise in single-cell data}
+Chu SK, Zhao S, Shyr Y, and Liu Q.
+\newblock Comprehensive evaluation of noise reduction methods for single-cell RNA sequencing data.
+\newblock Briefings in Bioinformatics. 2022 Mar 10;23(2).
+
+\bibitem{TriMap}
+Amid E, Warmuth MK. 
+\newblock TriMap: Large-scale dimensionality reduction using triplets. 
+\newblock arXiv:1910.00204.v2 [Preprint]. 2022 Mar 26. Available from https://arxiv.org/abs/2308.15513.
+
+\bibitem{rank-based criteria}
+Lee JA, Verleysen M.
+\newblock Quality assessment of dimensionality reduction: Rank-based criteria.
+\newblock Neurocomputing. 2009 Mar;72(7-9):1431-43.
+
+\bibitem{precision score}
+Schreck T, von Landesberger T, Bremm S.
+\newblock Techniques for precision-based visual analysis of projected data.
+\newblock Sage. 2012 Jan 1;9(3).
+
+\end{thebibliography}
+
+\end{document}

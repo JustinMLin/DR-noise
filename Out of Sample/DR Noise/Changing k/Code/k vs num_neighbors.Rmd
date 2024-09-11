@@ -1,0 +1,145 @@
+---
+title: "k vs num_neighbors"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(umap)
+
+source("../../Algorithms/Out of sample algs.R")
+source("../../Algorithms/Out of sample metrics.R")
+source("../../Algorithms/Plotting tools.R")
+```
+
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r, include=FALSE}
+data = read_excel("../../Breast Cancer Example/breast cancer data.xlsx", col_names = FALSE)
+
+data = data %>%
+  select(-c(1,2))
+```
+
+```{r, include=FALSE}
+Z = unname(as.matrix(data))
+reduce_indices = sample(1:dim(Z)[1], 100)
+Z = Z[reduce_indices,]
+vars = diag(var(Z))
+
+pca = prcomp(Z, center = TRUE, scale. = TRUE, tol = 0.1)
+
+Y = pca$x
+Y_emb = t(t(Y %*% t(pca$rotation)) * pca$scale + pca$center)
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+r = dim(Y)[2]
+q = 2
+```
+
+
+```{r}
+perplexity = 20
+n_neighbors = 20
+
+X_mds = cmdscale(dist(Z, method = "minkowski", p = 2))
+
+trans_tsne = tsne(Z, perplexity)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Z, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+X_umap = trans_umap$layout
+
+plot(X_mds)
+plot(X_tsne)
+plot(X_umap)
+```
+
+```{r, include=FALSE}
+b = 40
+num_pts = 20
+indices = sample(1:n, num_pts)
+
+y = Y[indices,]
+z = t(t(y %*% t(pca$rotation)) * pca$scale + pca$center)
+
+get_risks = function(k) {
+  risks_tsne = risks_umap = matrix(nrow = num_pts, ncol = 3)
+  
+  for (i in 1:num_pts) {
+    new_pts = matrix(rep(z[i,], each = b), nrow = b) + matrix(rnorm(b * p, 0, rep(sqrt(vars/5), b)), nrow = b)
+  
+    trust_tsne = cont_tsne = prec_tsne = 0
+    trust_umap = cont_umap = prec_umap = 0
+  
+    xs_tsne = py_to_r(predict_tsne(trans_tsne, new_pts))
+    xs_umap = predict(trans_umap, new_pts)
+  
+    for (j in 1:b) {
+      new_pt = new_pts[j,]
+    
+      x_tsne = xs_tsne[j,]
+      x_umap = xs_umap[j,]
+    
+      trust_tsne = trust_tsne + trustworthiness(Y, y[i,], X_tsne, x_tsne, k = k)
+      cont_tsne = cont_tsne + continuity(Y, y[i,], X_tsne, x_tsne, k = k)
+      prec_tsne = prec_tsne + precision(Y, y[i,], X_tsne, x_tsne, k = k)
+    
+      trust_umap = trust_umap + trustworthiness(Y, y[i,], X_umap, x_umap, k = k)
+      cont_umap = cont_umap + continuity(Y, y[i,], X_umap, x_umap, k = k)
+      prec_umap = prec_umap + precision(Y, y[i,], X_umap, x_umap, k = k)
+    }
+  
+    risks_tsne[i,] = c(trust_tsne/b, cont_tsne/b, prec_tsne/b)
+    risks_umap[i,] = c(trust_umap/b, cont_umap/b, prec_umap/b)
+  }
+  
+  list(risks_tsne, risks_umap)
+}
+```
+
+```{r, include=FALSE}
+risks5 = get_risks(5)
+risks10 = get_risks(10)
+risks20 = get_risks(20)
+risks50 = get_risks(50)
+
+```
+
+```{r}
+dat_tsne = data.frame(trust = c(risks5[[1]][,1], risks10[[1]][,1], risks20[[1]][,1], risks50[[1]][,1]),
+                      cont = c(risks5[[1]][,2], risks10[[1]][,2], risks20[[1]][,2], risks50[[1]][,2]),
+                      prec = c(risks5[[1]][,3], risks10[[1]][,3], risks20[[1]][,3], risks50[[1]][,3]),
+                      k = c(rep(5, n), rep(10, n), rep(20, n), rep(50, n)))
+
+ggplot(dat_tsne, aes(x = trust, group = k, y = k, color = k)) + geom_boxplot()
+ggplot(dat_tsne, aes(x = cont, group = k, y = k, color = k)) + geom_boxplot()
+ggplot(dat_tsne, aes(x = prec, group = k, y = k, color = k)) + geom_boxplot()
+```
+
+```{r}
+dat_umap = data.frame(trust = c(risks5[[2]][,1], risks10[[2]][,1], risks20[[2]][,1], risks50[[2]][,1]),
+                      cont = c(risks5[[2]][,2], risks10[[2]][,2], risks20[[2]][,2], risks50[[2]][,2]),
+                      prec = c(risks5[[2]][,3], risks10[[2]][,3], risks20[[2]][,3], risks50[[2]][,3]),
+                      k = c(rep(5, n), rep(10, n), rep(20, n), rep(50, n)))
+
+ggplot(dat_umap, aes(x = trust, group = k, y = k, color = k)) + geom_boxplot()
+ggplot(dat_umap, aes(x = cont, group = k, y = k, color = k)) + geom_boxplot()
+ggplot(dat_umap, aes(x = prec, group = k, y = k, color = k)) + geom_boxplot()
+```
+
+> k does not seem to matter, even in the most extreme cases. In this case, the error variance is 20% of the variance of the original data (relatively noisy), but there's no discernable patterns in reconstruction score for values k = 5, 10, 20, 50.

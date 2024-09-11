@@ -1,0 +1,379 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.5.6)  26 AUG 2024 11:28
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**S1_Appendix.tex
+(./S1_Appendix.tex
+LaTeX2e <2022-11-01> patch level 1
+L3 programming layer <2023-02-22>
+(/usr/local/texlive/2023/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2023/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2022/07/02 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count185
+\c@section=\count186
+\c@subsection=\count187
+\c@subsubsection=\count188
+\c@paragraph=\count189
+\c@subparagraph=\count190
+\c@figure=\count191
+\c@table=\count192
+\abovecaptionskip=\skip48
+\belowcaptionskip=\skip49
+\bibindent=\dimen140
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count193
+\float@exts=\toks16
+\float@box=\box51
+\@float@everytoks=\toks17
+\@floatcapt=\box52
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks18
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 107.
+
+(/usr/local/texlive/2023/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2022/09/22 v1.2b Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen141
+\Gin@req@width=\dimen142
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2020/01/02 v5.9 Page Geometry
+
+(/usr/local/texlive/2023/texmf-dist/tex/generic/iftex/ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+
+(/usr/local/texlive/2023/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2022/02/03 v1.0f TeX engine tests
+))
+\Gm@cnth=\count194
+\Gm@cntv=\count195
+\c@Gm@tempcnt=\count196
+\Gm@bindingoffset=\dimen143
+\Gm@wd@mp=\dimen144
+\Gm@odd@mp=\dimen145
+\Gm@even@mp=\dimen146
+\Gm@layoutwidth=\dimen147
+\Gm@layoutheight=\dimen148
+\Gm@layouthoffset=\dimen149
+\Gm@layoutvoffset=\dimen150
+\Gm@dimlist=\toks19
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/03/12 v3.6j Customizing captions (AR)
+
+(/usr/local/texlive/2023/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/03/12 v2.4 caption3 kernel (AR)
+\caption@tempdima=\dimen151
+\captionmargin=\dimen152
+\caption@leftmargin=\dimen153
+\caption@rightmargin=\dimen154
+\caption@width=\dimen155
+\caption@indent=\dimen156
+\caption@parindent=\dimen157
+\caption@hangindent=\dimen158
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count197
+\c@continuedfloat=\count198
+Package caption Info: float package is loaded.
+)
+(/usr/local/texlive/2023/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count199
+\l__pdf_internal_box=\box53
+)
+(./S1_Appendix.aux)
+\openout1 = `S1_Appendix.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+
+(/usr/local/texlive/2023/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count266
+\scratchdimen=\dimen159
+\scratchbox=\box54
+\nofMPsegments=\count267
+\nofMParguments=\count268
+\everyMPshowfont=\toks20
+\MPscratchCnt=\count269
+\MPscratchDim=\dimen160
+\MPnumerator=\count270
+\makeMPintoPDFobject=\count271
+\everyMPtoPDFconversion=\toks21
+) (/usr/local/texlive/2023/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(/usr/local/texlive/2023/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: <default>
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(108.405pt, 397.485pt, 108.405pt)
+* v-part:(T,H,B)=(108.405pt, 578.15999pt, 108.405pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=397.485pt
+* \textheight=578.15999pt
+* \oddsidemargin=36.13501pt
+* \evensidemargin=36.13501pt
+* \topmargin=-0.86499pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 15.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 15.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 15.
+
+LaTeX Warning: No \author given.
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 24.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 24.
+<supporting info figures//Fig S1.png, id=1, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S1.png Graphic file (type png)
+<use supporting info figures//Fig S1.png>
+Package pdftex.def Info: supporting info figures//Fig S1.png  used on input lin
+e 28.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+<supporting info figures//Fig S2.png, id=2, 356.0502pt x 127.1952pt>
+File: supporting info figures//Fig S2.png Graphic file (type png)
+<use supporting info figures//Fig S2.png>
+Package pdftex.def Info: supporting info figures//Fig S2.png  used on input lin
+e 35.
+(pdftex.def)             Requested size: 427.25809pt x 152.63347pt.
+
+Overfull \hbox (29.77309pt too wide) in paragraph at lines 35--37
+ [][] 
+ []
+
+[1
+
+{/usr/local/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./suppo
+rting info figures//Fig S1.png>]
+<supporting info figures//Fig S3.png, id=13, 254.3904pt x 101.6598pt>
+File: supporting info figures//Fig S3.png Graphic file (type png)
+<use supporting info figures//Fig S3.png>
+Package pdftex.def Info: supporting info figures//Fig S3.png  used on input lin
+e 42.
+(pdftex.def)             Requested size: 356.14412pt x 142.32274pt.
+
+
+LaTeX Warning: Citation `understanding DR' on page 2 undefined on input line 48
+.
+
+<supporting info figures//Fig S4.png, id=14, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S4.png Graphic file (type png)
+<use supporting info figures//Fig S4.png>
+Package pdftex.def Info: supporting info figures//Fig S4.png  used on input lin
+e 52.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+[2 <./supporting info figures//Fig S2.png> <./supporting info figures//Fig S3.p
+ng>]
+<supporting info figures//Fig S5.png, id=18, 356.0502pt x 127.1952pt>
+File: supporting info figures//Fig S5.png Graphic file (type png)
+<use supporting info figures//Fig S5.png>
+Package pdftex.def Info: supporting info figures//Fig S5.png  used on input lin
+e 59.
+(pdftex.def)             Requested size: 373.85286pt x 133.55501pt.
+<supporting info figures//Fig S6.png, id=19, 254.3904pt x 101.6598pt>
+File: supporting info figures//Fig S6.png Graphic file (type png)
+<use supporting info figures//Fig S6.png>
+Package pdftex.def Info: supporting info figures//Fig S6.png  used on input lin
+e 66.
+(pdftex.def)             Requested size: 356.14412pt x 142.32274pt.
+ [3 <./supporting info figures//Fig S4.png> <./supporting info figures//Fig S5.
+png>]
+
+LaTeX Warning: Citation `CyTOF data' on page 4 undefined on input line 74.
+
+<supporting info figures//Fig S7.png, id=23, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S7.png Graphic file (type png)
+<use supporting info figures//Fig S7.png>
+Package pdftex.def Info: supporting info figures//Fig S7.png  used on input lin
+e 78.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+<supporting info figures//Fig S8.png, id=24, 541.3023pt x 180.4341pt>
+File: supporting info figures//Fig S8.png Graphic file (type png)
+<use supporting info figures//Fig S8.png>
+Package pdftex.def Info: supporting info figures//Fig S8.png  used on input lin
+e 85.
+(pdftex.def)             Requested size: 378.90903pt x 126.303pt.
+[4 <./supporting info figures//Fig S6.png> <./supporting info figures//Fig S7.p
+ng>]
+<supporting info figures//Fig S9.png, id=28, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S9.png Graphic file (type png)
+<use supporting info figures//Fig S9.png>
+Package pdftex.def Info: supporting info figures//Fig S9.png  used on input lin
+e 92.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+<supporting info figures//Fig S10.png, id=29, 541.3023pt x 180.4341pt>
+File: supporting info figures//Fig S10.png Graphic file (type png)
+<use supporting info figures//Fig S10.png>
+Package pdftex.def Info: supporting info figures//Fig S10.png  used on input li
+ne 99.
+(pdftex.def)             Requested size: 378.90903pt x 126.303pt.
+ [5 <./supporting info figures//Fig S8.png> <./supporting info figures//Fig S9.
+png>]
+
+LaTeX Warning: Citation `enterotype data' on page 6 undefined on input line 105
+.
+
+<supporting info figures//Fig S11.png, id=33, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S11.png Graphic file (type png)
+<use supporting info figures//Fig S11.png>
+Package pdftex.def Info: supporting info figures//Fig S11.png  used on input li
+ne 109.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+<supporting info figures//Fig S12.png, id=34, 541.3023pt x 180.4341pt>
+File: supporting info figures//Fig S12.png Graphic file (type png)
+<use supporting info figures//Fig S12.png>
+Package pdftex.def Info: supporting info figures//Fig S12.png  used on input li
+ne 116.
+(pdftex.def)             Requested size: 378.90903pt x 126.303pt.
+[6 <./supporting info figures//Fig S10.png> <./supporting info figures//Fig S11
+.png>]
+<supporting info figures//Fig S13.png, id=40, 457.71pt x 152.4897pt>
+File: supporting info figures//Fig S13.png Graphic file (type png)
+<use supporting info figures//Fig S13.png>
+Package pdftex.def Info: supporting info figures//Fig S13.png  used on input li
+ne 123.
+(pdftex.def)             Requested size: 389.05534pt x 129.61684pt.
+<supporting info figures//Fig S14.png, id=41, 541.3023pt x 180.4341pt>
+File: supporting info figures//Fig S14.png Graphic file (type png)
+<use supporting info figures//Fig S14.png>
+Package pdftex.def Info: supporting info figures//Fig S14.png  used on input li
+ne 130.
+(pdftex.def)             Requested size: 378.90903pt x 126.303pt.
+ [7 <./supporting info figures//Fig S12.png> <./supporting info figures//Fig S1
+3.png>]
+<supporting info figures//Fig S15.png, id=46, 1059.96pt x 654.445pt>
+File: supporting info figures//Fig S15.png Graphic file (type png)
+<use supporting info figures//Fig S15.png>
+Package pdftex.def Info: supporting info figures//Fig S15.png  used on input li
+ne 140.
+(pdftex.def)             Requested size: 349.78787pt x 215.96751pt.
+<supporting info figures//Fig S16.png, id=47, 1059.96pt x 654.445pt>
+File: supporting info figures//Fig S16.png Graphic file (type png)
+<use supporting info figures//Fig S16.png>
+Package pdftex.def Info: supporting info figures//Fig S16.png  used on input li
+ne 147.
+(pdftex.def)             Requested size: 349.78787pt x 215.96751pt.
+ [8 <./supporting info figures//Fig S14.png> <./supporting info figures//Fig S1
+5.png>] [9 <./supporting info figures//Fig S16.png>]
+No file S1_Appendix.bbl.
+
+Underfull \hbox (badness 5817) in paragraph at lines 194--197
+[]\OT1/cmr/m/n/10 Crecchi F, de Bodt C, Ver-ley-sen M, Lee JA, Bac-ciu D.  Perp
+lexity-
+ []
+
+
+Underfull \hbox (badness 2828) in paragraph at lines 194--197
+\OT1/cmr/m/n/10 free para-met-ric t-SNE.  arXiv:2010.01359v1 [Preprint]. 2020. 
+Avail-able from
+ []
+
+[10]
+Underfull \hbox (badness 2245) in paragraph at lines 294--297
+[]\OT1/cmr/m/n/10 Amid E, War-muth MK.  TriMap: Large-scale di-men-sion-al-ity 
+re-duc-tion us-
+ []
+
+
+Underfull \hbox (badness 4048) in paragraph at lines 294--297
+\OT1/cmr/m/n/10 ing triplets.  arXiv:1910.00204.v2 [Preprint]. 2022 Mar 26. Ava
+il-able from
+ []
+
+[11] (./S1_Appendix.aux)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 3513 strings out of 476025
+ 63721 string characters out of 5790018
+ 1858388 words of memory out of 5000000
+ 23962 multiletter control sequences out of 15000+600000
+ 516542 words of font info for 46 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 57i,7n,63p,714b,313s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
+></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
+</usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
+/usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
+sr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr
+/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/lo
+cal/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
+Output written on S1_Appendix.pdf (11 pages, 3257971 bytes).
+PDF statistics:
+ 93 PDF objects out of 1000 (max. 8388607)
+ 47 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 81 words of extra memory for PDF output out of 10000 (max. 10000000)
+

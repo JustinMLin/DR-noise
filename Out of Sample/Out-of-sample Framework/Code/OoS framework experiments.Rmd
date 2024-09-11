@@ -1,0 +1,155 @@
+---
+title: "OoS framework experiments"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+source("Out of sample algs.R")
+source("Out of sample metrics.R")
+library(ggplot2)
+library(tidyverse)
+library(scatterplot3d)
+```
+
+```{r, include=FALSE}
+sphere = function(b, r) {
+  theta = runif(b, 0, 2*pi)
+  phi = acos(1 - 2*runif(b,0,1))
+
+  x = r * sin(phi) * cos(theta)
+  y = r * sin(phi) * sin(theta)
+  z = r * cos(phi)
+
+  matrix(c(x,y,z), nrow = b, ncol = 3)
+}
+```
+
+# Setup Data {.tabset}
+
+## Random Data
+
+```{r}
+n = 40
+p = 3
+q = 2
+
+Z = matrix(rnorm(n*p, sd = 5), nrow = n, ncol = p)
+X = cmdscale(dist(Z))
+```
+
+## Circular Data
+
+```{r, eval=FALSE}
+n = 30
+p = 3
+q = 2
+
+theta = seq(0, 2*pi, length.out = n+1)[-(n+1)]
+x = cos(theta)
+y = sin(theta)
+Z = cbind(x, y, rep(0,n))
+X = cmdscale(dist(Z))
+```
+
+# Generate cloud of new points to embed
+
+```{r}
+sd = 0.2
+b = 40
+
+w = c(0.1,0,5)
+new_pts = matrix(rnorm(b * p, 0, sd), ncol = p) + matrix(rep(w, each = b), nrow = b)
+```
+
+```{r}
+scatterplot3d(rbind(Z, new_pts))
+```
+
+```{r, include=FALSE}
+min_cost_pts = matrix(nrow = b, ncol = q)
+min_cost_sq_pts = matrix(nrow = b, ncol = q)
+Trosset_pts = matrix(nrow = b, ncol = q)
+
+D2 = as.matrix(dist(Z)^2)
+Bengio_pts = Bengio_multiple(Z, D2, new_pts, q, K_mds_lp(2))
+
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  delta = A2[1:n, (n+1)]
+  
+  min_cost_pts[i,] = min_cost(X, delta)
+  min_cost_sq_pts[i,] = min_cost_sq(X, delta)
+  Trosset_pts[i,] = Trosset(X, A2)
+}
+```
+
+```{r}
+data.frame(x = c(X[,1], min_cost_pts[,1], min_cost_sq_pts[,1], Trosset_pts[,1], Bengio_pts[,1]),
+           y = c(X[,2], min_cost_pts[,2], min_cost_sq_pts[,2], Trosset_pts[,2], Bengio_pts[,2]),
+           type = c(rep("Original Data", n), rep("Min Cost", b), rep("Squared Min Cost", b), rep("Trosset",b),                     rep("Bengio", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5) + coord_equal()
+```
+
+```{r}
+trusts = vector(length = b)
+conts = vector(length = b)
+stresses = vector(length = b)
+local_errs = vector(length = b)
+dist_cors = vector(length = b)
+
+
+for (i in 1:b) {
+  new_pt = new_pts[i]
+  A2 = as.matrix(dist(rbind(Z, new_pt))^2)
+  
+  y = Trosset_approx(X, A2)
+  
+  trusts[i] = trustworthiness(Z, w, X, y, 3)
+  conts[i] = continuity(Z, w, X, y, 3)
+  stresses[i] = stress(Z, w, X, y)
+  local_errs[i] = local_error(Z, w, X, y)
+  dist_cors = dist_cor(Z, w, X, y)
+}
+
+scores_Bengio = data.frame(trusts, conts, stresses, local_errs, dist_cors)
+risks_Bengio = colMeans(scores_Bengio)
+```
+
+
+```{r}
+trusts = vector(length = b)
+conts = vector(length = b)
+stresses = vector(length = b)
+local_errs = vector(length = b)
+dist_cors = vector(length = b)
+
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  delta = A2[1:n, (n+1)]
+  y = min_cost_sq(X, delta)
+  
+  trusts[i] = trustworthiness(Z, w, X, y, 3)
+  conts[i] = continuity(Z, w, X, y, 3)
+  stresses[i] = stress(Z, w, X, y)
+  local_errs[i] = local_error(Z, w, X, y)
+  dist_cors = dist_cor(Z, w, X, y)
+}
+
+scores_min_cost = data.frame(trusts, conts, stresses, local_errs, dist_cors)
+risks_min_cost = colMeans(scores_min_cost)
+```
+
+
+```{r}
+risks_Bengio
+risks_min_cost
+```
+

@@ -1,0 +1,122 @@
+---
+title: "Heatmap (links)"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(MASS)
+library(dplyr)
+library(Rtsne)
+library(scatterplot3d)
+library(viridis)
+
+source("../../../Algorithms/DR metrics.R")
+```
+
+```{r}
+n = 100
+r = 3
+
+theta = seq(from = 0, to = 2*pi, length.out = n/2 + 1)[-1]
+
+x1 = 5*cos(theta)
+y1 = 5*sin(theta)
+z1 = rep(0, n/2)
+
+x2 = 5*cos(theta) + 5
+y2 = rep(0, n/2)
+z2 = 5*sin(theta)
+
+Y = matrix(c(x1, x2, y1, y2, z1, z2), nrow = n, ncol = 3)
+
+scatterplot3d(Y)
+```
+
+```{r, include=FALSE}
+perplexity = seq(from = 5, to = 30, by = 5)
+sd = seq(from = 0, to = 2, by = 0.2)
+p = seq(from = 3, to = 10, by = 1)
+
+best_perp_trust = best_perp_stress = best_perp_shep = matrix(nrow = length(sd), ncol = length(p))
+best_perp_trust_noise = best_perp_stress_noise = best_perp_shep_noise = matrix(nrow = length(sd), ncol = length(p))
+```
+
+```{r}
+b = 10
+k = 5
+
+for (k in 1:length(sd)) {
+  for (l in 1:length(p)) {
+    tsne_error = tsne_noise_error = matrix(nrow = length(perplexity), ncol = 3)
+
+    for (i in 1:length(perplexity)) {
+      error = noise_error = matrix(nrow = b, ncol = 3)
+      
+      for (j in 1:b) {
+        Z = cbind(Y, matrix(0, nrow = n, ncol = p[l] - r)) + 
+          matrix(rnorm(n*p, sd = sd[k]), nrow = n, ncol = p[l])
+        
+        X_tsne = Rtsne(Z, perplexity = perplexity[i])$Y
+        
+        error[j,1] = trustworthiness_full(Y, X_tsne, k)
+        error[j,2] = local_stress_full(Y, X_tsne, k)
+        error[j,3] = dist_cor_full(Y, X_tsne)
+        
+        noise_error[j,1] = trustworthiness_full(Z, X_tsne, k)
+        noise_error[j,2] = local_stress_full(Z, X_tsne, k)
+        noise_error[j,3] = dist_cor_full(Z, X_tsne)
+      }
+      
+      tsne_error[i,] = colMeans(error)
+      tsne_noise_error[i,] = colMeans(noise_error)
+    }
+    
+    best_perp_trust[k,l] = perplexity[which.min(tsne_error[,1])]
+    best_perp_trust_noise[k,l] = perplexity[which.min(tsne_noise_error[,1])]
+    
+    best_perp_stress[k,l] = perplexity[which.min(tsne_error[,2])]
+    best_perp_stress_noise[k,l] = perplexity[which.min(tsne_noise_error[,2])]
+    
+    best_perp_shep[k,l] = perplexity[which.min(tsne_error[,3])]
+    best_perp_shep_noise[k,l] = perplexity[which.min(tsne_noise_error[,3])]
+  }
+}
+```
+
+```{r}
+save(Y, perplexity, sd, p, best_perp_trust, best_perp_trust_noise,
+     best_perp_stress, best_perp_stress_noise, best_perp_shep, best_perp_shep_noise,
+     file = "../Data/links heatmap.Rda")
+```
+
+```{r}
+load("../Data/links heatmap.Rda")
+```
+
+```{r}
+df = data.frame(sd = rep(sd, each = length(p)),
+                p = rep(p, length(sd)),
+                trust = c(t(best_perp_trust)),
+                stress = c(t(best_perp_stress)),
+                shep = c(t(best_perp_shep)),
+                trust_noise = c(t(best_perp_trust_noise)),
+                stress_noise = c(t(best_perp_stress_noise)),
+                shep_noise = c(t(best_perp_shep_noise)))
+
+```
+
+```{r}
+ggplot(df, aes(x = sd, y = p, fill = trust)) + 
+  geom_tile() + 
+  scale_fill_viridis(discrete=FALSE)
+
+ggplot(df, aes(x = sd, y = p, fill = trust_noise)) + 
+  geom_tile() + 
+  scale_fill_viridis(discrete=FALSE)
+```
+

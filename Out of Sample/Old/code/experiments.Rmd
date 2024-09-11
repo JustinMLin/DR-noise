@@ -1,0 +1,316 @@
+---
+title: "experiments"
+author: "Justin Lin"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("out of sample algs.R")
+library(ggplot2)
+library(gridExtra)
+library(rgl)
+```
+
+## Min Cost vs. Trosset vs. Bengio
+The data is uniform on the cube [-5,5]^3 and the new point is chosen randomly in
+the cube [-10,10]^3. The data was projected to two dimensions using the Bengio
+method. This 2D embedding was used to calculate the Min Cost and Trosset points.
+
+```{r Min Cost vs. Trosset vs. Bengio}
+n = 20
+data = matrix(runif(3*n, -5, 5), ncol = 3)
+proj_data = Bengio_data(data, 2, K_mds)
+
+new_pt = runif(3,-10,10)
+
+a2 = vector(length = n)
+for (i in 1:n) {
+  a2[i] = dist_sq(new_pt, data[i,])
+}
+
+min_cost_pt = min_cost(proj_data, a2, range = 20)$par
+
+Trosset_pt = Trosset(proj_data, compute_dist_sq_mat(proj_data), a2, range = 20)$par
+
+Bengio_pt = Bengio(data, new_pt, 2, K_mds)
+
+plot_data = data.frame(x = c(proj_data[,1], min_cost_pt[1], Trosset_pt[1], Bengio_pt[1]),
+                       y = c(proj_data[,2], min_cost_pt[2], Trosset_pt[2], Bengio_pt[2]),
+                       type = c(rep("Data", n), "Min Cost", "Trosset", "Bengio"))
+ggplot(plot_data, aes(x = x, y = y, color = factor(type))) + geom_point()
+```
+
+## Relative Error: Min Cost vs. Trosset
+The data was generated randomly on the square [-10,10]^2. The new point was 
+randomly generated on the cube [-10,10]^2 x [0,20]. The square inter-point
+distances of the embedded point were compared to the squared inter-point 
+distances of the original point. Relative error means the absolute error were 
+divided by the squared inter-point distances of the original point. The ten
+simulations are in order based on the "Euclidean-ness" of the data.
+
+```{r, relative error Min Cost vs. Trosset}
+experiment = function(n) {
+  proj_data = matrix(runif(2*n, -10, 10), ncol = 2)
+  D2 = compute_dist_sq_mat(proj_data)
+  
+  rand_point = c(runif(2, -20, 20), runif(1, 0, 20))
+  a2 = vector(length = n)
+  for (i in 1:n) {
+    a2[i] = dist_sq(c(proj_data[i,],0), rand_point)
+  }
+  
+  new_D2 = rbind(cbind(D2,a2),c(a2,0))
+  e = rep(1,n+1)
+  P = diag(n+1) - e %*% t(e) / (n+1)
+  B = -0.5 * P %*% new_D2 %*% P
+  d = svd(B)$d
+  emb = round((d[1] + d[2]) / sum(d), digits = 5)
+  
+  Trosset_pt = Trosset(proj_data, D2, a2, range = 20)
+  Trosset_error = rel_error(Trosset_pt$par, proj_data, a2)
+  
+  min_cost_pt = min_cost(proj_data, a2, range = 20)
+  min_cost_error = rel_error(min_cost_pt$par, proj_data, a2)
+  
+  data.frame(Ddata_sq = a2, Trosset_error, min_cost_error, emb = rep(emb,n))
+}
+
+get_data = function(n, runs) {
+  data = experiment(n)
+  
+  for (i in 2:runs) {
+    data = rbind(data, experiment(n))
+  }
+  data
+}
+
+data = get_data(60,10)
+
+p = ggplot(data, aes(x = Ddata_sq, y = Trosset_error, col = "Trosset")) + 
+  geom_point() +
+  geom_smooth(se = FALSE) + 
+  geom_point(data = data, aes(x = Ddata_sq, y = min_cost_error, col = "Min Cost")) +
+  geom_smooth(data = data, aes(x = Ddata_sq, y = min_cost_error, col = "Min Cost"), se = FALSE)
+p + facet_grid(rows = vars(emb), scale = "free_y")
+```
+
+
+## Reproducing inter-point distances with error: Min Cost vs. Bengio
+The data was uniform in the solid sphere with radius 5. The new points were
+distances of 2, 5, and 10 away from the origin. The Gaussian error had standard
+deviation of 1, 2, 5, and 10 in all three coordinates. The Min Cost point was
+calculated using the 2D Bengio embedding. The mean relative errors in inter-
+point distances was calculated for both methods in each trial.
+
+```{r, reproducing inter-point distances with error Min Cost vs. Bengio}
+get_rel_errors = function(data, proj_data, base_pt, error_sd) {
+  error_pt = base_pt + rnorm(3, 0, error_sd)
+  Bengio_pt = Bengio(data, error_pt, 2, K_mds)
+  
+  n = length(data[,1])
+  a2 = vector(length = n)
+  for (i in 1:n) {
+    a2[i] = dist_sq(error_pt,data[i,])
+  }
+  min_cost_pt = min_cost(proj_data, a2, range = 15, iter = +1e06)$par
+  
+  base_pt_dists = vector(length = n)
+  Bengio_dists = vector(length = n)
+  min_cost_dists = vector(length = n)
+  
+  for (i in 1:n) {
+    base_pt_dists[i] = dist_sq(base_pt, data[i,])
+    Bengio_dists[i] = dist_sq(Bengio_pt, proj_data[i,])
+    min_cost_dists[i] = dist_sq(min_cost_pt, proj_data[i,])
+  }
+  
+  cbind(abs(base_pt_dists - min_cost_dists)/base_pt_dists, 
+        abs(base_pt_dists - Bengio_dists)/base_pt_dists)
+}
+
+sim = function(n = 20, b = 100, new_pt, sd) {
+  theta = runif(n,0,2*pi)
+  phi = runif(n, 0, pi)
+  r = 5*(runif(n,0,1))^(1/3)
+  
+  x = r*sin(phi)*cos(theta)
+  y = r*sin(phi)*sin(theta)
+  z = r*cos(phi)
+  
+  data = matrix(c(x,y,z), ncol = 3)
+  proj_data = Bengio_data(data, 2, K_mds)
+  
+  mean_errors = matrix(nrow = b, ncol = 2)
+  for (i in 1:b) {
+    errors = get_rel_errors(data, proj_data, new_pt, sd)
+    mean_errors[i,] = colMeans(errors)
+  }
+  
+  mean_errors
+}
+
+build_box = function(sds, base_pt, data_size = 20) {
+  n = length(sds)
+  mat = matrix(nrow = n*100, ncol = 3)
+  
+  for(i in 1:n) {
+    mat[((i-1)*100+1):(i*100),1] = rep(sds[i],100)
+    mat[((i-1)*100+1):(i*100),2:3] = sim(n = data_size, new_pt = base_pt, sd = sds[i])
+  }
+  table = data.frame(sd = c(mat[,1],mat[,1]),
+                     mean_rel_error = c(mat[,2],mat[,3]),
+                     type = c(rep("Min Cost", n*100), rep("Bengio", n*100)))
+  
+  ggplot(table, aes(x = factor(sd), y = mean_rel_error, color = type)) + geom_boxplot()
+}
+
+p1 = build_box(c(1,2,5,10), c(2,0,0))
+p2 = build_box(c(1,2,5,10), c(5,0,0))
+p3 = build_box(c(1,2,5,10), c(10,0,0))
+grid.arrange(p1,p2,p3,ncol=1)
+```
+
+
+## Reproducing inter-point distances on the sphere with error: Min Cost vs. Bengio
+The data was uniform on the upper hemisphere of radius 5 with geodesic 
+distances. The Min Cost point was calculated using the 2D Bengio embedding. The
+mean relative errors in inter-point distances was calculated for both methods in 
+each trial.
+
+```{r, reproducing inter-point distances on the sphere}
+get_rel_errors = function(spherical_data, proj_data, base_pt, error_sd) {
+  n = length(spherical_data[,1])
+  
+  error_theta = rnorm(1, 0, error_sd)
+  error_phi = rnorm(1, 0, error_sd/4)
+  error_pt = base_pt + c(error_theta, error_phi)
+  error_pt_cart = c(5*sin(error_pt[2]*cos(error_pt[1])), 
+                    5*sin(error_pt[2]*sin(error_pt[1])),
+                    5*cos(error_pt[2]))
+  
+  x = 5*sin(spherical_data[,2])*cos(spherical_data[,1])
+  y = 5*sin(spherical_data[,2])*sin(spherical_data[,1])
+  z = 5*cos(spherical_data[,2])
+  
+  cartesian_data = cbind(x,y,z)
+  
+  Bengio_error_pt = Bengio(cartesian_data, error_pt_cart, 2, K_mds)
+  
+  a2_error_pt = vector(length = n)
+  for (j in 1:n) {
+    a2_error_pt[j] = spherical_dist_sq(5, error_pt, spherical_data[j,])^2
+  }
+  min_cost_error_pt = min_cost(proj_data, a2_error_pt, range = 5, iter = 1e+06)$par
+  
+  base_pt_dists = vector(length = n)
+  Bengio_dists = vector(length = n)
+  min_cost_dists = vector(length = n)
+  
+  for (i in 1:n) {
+    base_pt_dists[i] = spherical_dist_sq(5, base_pt, spherical_data[i,])
+    Bengio_dists[i] = dist_sq(Bengio_error_pt, proj_data[i,])
+    min_cost_dists[i] = dist_sq(min_cost_error_pt, proj_data[i,])
+  }
+  
+  cbind(abs(base_pt_dists - min_cost_dists)/base_pt_dists, 
+        abs(base_pt_dists - Bengio_dists)/base_pt_dists)
+}
+
+sim = function(n = 20, b = 100, new_pt, sd) {
+  theta = runif(n,0,2*pi)
+  phi = runif(n, 0, pi)
+  r = 5*(runif(n,0,1))^(1/3)
+  
+  spherical_data = cbind(theta,phi)
+  
+  x = r*sin(phi)*cos(theta)
+  y = r*sin(phi)*sin(theta)
+  z = r*cos(phi)
+  
+  cartesian_data = matrix(c(x,y,z), ncol = 3)
+  proj_data = Bengio_data(cartesian_data, 2, K_mds)
+  
+  mean_errors = matrix(nrow = b, ncol = 2)
+  for (i in 1:b) {
+    errors = get_rel_errors(spherical_data, proj_data, new_pt, sd)
+    mean_errors[i,] = colMeans(errors)
+  }
+  
+  mean_errors
+}
+
+build_box = function(sds, base_pt, data_size = 20) {
+  n = length(sds)
+  mat = matrix(nrow = n*100, ncol = 3)
+  
+  for(i in 1:n) {
+    mat[((i-1)*100+1):(i*100),1] = rep(sds[i],100)
+    mat[((i-1)*100+1):(i*100),2:3] = sim(n = data_size, new_pt = base_pt, sd = sds[i])
+  }
+  table = data.frame(sd = c(mat[,1],mat[,1]),
+                     mean_rel_error = c(mat[,2],mat[,3]),
+                     type = c(rep("Min Cost", n*100), rep("Bengio", n*100)))
+  
+  ggplot(table, aes(x = factor(sd), y = mean_rel_error, color = type)) + geom_boxplot()
+}
+
+p1 = build_box(sds = c(pi/16,pi/8,pi/4), base_pt = c(0,pi/8))
+p2 = build_box(sds = c(pi/16,pi/8,pi/4), base_pt = c(0,pi/4))
+p3 = build_box(sds = c(pi/16,pi/8,pi/4), base_pt = c(0,pi/2))
+grid.arrange(p1,p2,p3,ncol = 1)
+```
+
+
+## Projecting a point on the sphere with error: Min Cost vs. Bengio
+The data was uniform on the upper hemisphere of radius 5 with geodesic 
+distances. The Min Cost point was calculated using the 2D Bengio embedding. The
+projected data, Bengio embedding of the base point, Bengio embedding of the
+noised point, and Min Cost embedding of the noised point are plotted.
+
+```{r, error point on sphere}
+sim = function(n, new_pt, error_sd) {
+  theta = runif(n,0,2*pi)
+  phi = runif(n, 0, pi)
+  r = 5*(runif(n,0,1))^(1/3)
+  
+  spherical_data = cbind(theta,phi)
+  
+  x = r*sin(phi)*cos(theta)
+  y = r*sin(phi)*sin(theta)
+  z = r*cos(phi)
+  
+  cartesian_data = matrix(c(x,y,z), ncol = 3)
+  proj_data = Bengio_data(cartesian_data, 2, K_mds)
+  
+  new_pt_cart = c(5*sin(new_pt[2]*cos(new_pt[1])), 
+                  5*sin(new_pt[2]*sin(new_pt[1])),
+                  5*cos(new_pt[2]))
+  
+  Bengio_base = Bengio(cartesian_data, new_pt_cart, 2, K_mds)
+  
+  error_theta = rnorm(1, 0, error_sd)
+  error_phi = rnorm(1, 0, error_sd/4)
+  error_pt = new_pt + c(error_theta, error_phi)
+  error_pt_cart = c(5*sin(error_pt[2]*cos(error_pt[1])), 
+                    5*sin(error_pt[2]*sin(error_pt[1])),
+                    5*cos(error_pt[2]))
+  
+  Bengio_pt = Bengio(cartesian_data, error_pt_cart, 2, K_mds)
+  
+  a2 = vector(length = n)
+  for (i in 1:n) {
+    a2[i] = spherical_dist_sq(5, error_pt, spherical_data[1,])^2
+  }
+  min_cost_pt = min_cost(proj_data, a2, range = 5, iter = 1e+07)$par
+  
+  data = data.frame(x = c(proj_data[,1], Bengio_base[1], min_cost_pt[1], Bengio_pt[1]), 
+                    y = c(proj_data[,2], Bengio_base[2], min_cost_pt[2], Bengio_pt[2]),
+                    type = c(rep("Data", n), "Bengio Base", "Min Cost", "Bengio"))
+  ggplot(data, aes(x = x, y = y, color = factor(type))) + geom_point()
+}
+
+sim(60, new_pt = c(0, pi/4), error_sd = pi/4)
+
+```
+

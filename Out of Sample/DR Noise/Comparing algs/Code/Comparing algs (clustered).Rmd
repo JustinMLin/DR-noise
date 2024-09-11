@@ -1,0 +1,216 @@
+---
+title: "DR Noise Experiments"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(gridExtra)
+library(umap)
+library(MASS)
+library(magrittr)
+library(dplyr)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+source("../../../Algorithms/Plotting tools.R")
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r}
+noise_sd = 1
+Y = rbind(mvrnorm(10, c(6,0,0,0,0,0), diag(1.5, nrow = 6)),
+          mvrnorm(10, c(0,10,0,0,0,0), diag(2, nrow = 6)),
+          mvrnorm(10, c(0,0,-5,0,0,0), diag(2, nrow = 6)),
+          mvrnorm(10, c(0,0,0,7,0,0), diag(3, nrow = 6)),
+          mvrnorm(10, c(0,0,0,0,-5,0), diag(2, nrow = 6)),
+          mvrnorm(10, c(0,0,0,0,0,0), diag(1, nrow = 6)))
+
+Z = cbind(Y, matrix(0, nrow = 60, ncol = 4)) + matrix(rnorm(60*10, sd = noise_sd), nrow = 60)
+
+pca = prcomp(Z, center = TRUE, rank. = 6)
+
+Y = pca$x
+Y_emb = t(t(Y %*% t(pca$rotation)) + pca$center)
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+r = dim(Y)[2]
+q = 2
+```
+
+```{r}
+X_mds = cmdscale(dist(Z, method = "minkowski", p = 2))
+
+perplexity = 10
+n_neighbors = 10
+k = 10
+
+trans_tsne = tsne(Z, perplexity)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Z, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+X_umap = trans_umap$layout
+
+data.frame(x = X_mds[,1], y = X_mds[,2], 
+           cluster = c(rep(1, 10), rep(2, 10), rep(3, 10), rep(4, 10), rep(5, 10), rep(6, 10))) %>%
+  ggplot(aes(x = x, y = y, col = factor(cluster))) + geom_point()
+
+data.frame(x = X_tsne[,1], y = X_tsne[,2], 
+           cluster = c(rep(1, 10), rep(2, 10), rep(3, 10), rep(4, 10), rep(5, 10), rep(6, 10))) %>%
+  ggplot(aes(x = x, y = y, col = factor(cluster))) + geom_point()
+
+data.frame(x = X_umap[,1], y = X_umap[,2], 
+           cluster = c(rep(1, 10), rep(2, 10), rep(3, 10), rep(4, 10), rep(5, 10), rep(6, 10))) %>%
+  ggplot(aes(x = x, y = y, col = factor(cluster))) + geom_point()
+```
+
+```{r, include=FALSE}
+b = 40
+num_pts = 40
+indices = sample(1:n, num_pts)
+noise_proportion = 0.5
+
+y = Y[indices,]
+z = cbind(y, matrix(0, nrow = num_pts, ncol = 4))
+
+risks_kpca = risks_tsne = risks_umap = matrix(nrow = num_pts, ncol = 6)
+og_errors_kpca = og_errors_tsne = og_errors_umap = matrix(nrow = num_pts, ncol = 6)
+
+for (i in 1:num_pts) {
+  new_pts = matrix(rep(z[i,], each = b), nrow = b) + matrix(rnorm(b * p, 0, rep(noise_sd, b)), nrow = b)
+  
+  trust_kpca = trust_tsne = trust_umap = 0
+  cont_kpca = cont_tsne = cont_umap = 0
+  prec_kpca = prec_tsne = prec_umap = 0
+  stress_kpca = stress_tsne = stress_umap = 0
+  local_stress_kpca = local_stress_tsne = local_stress_umap = 0
+  dist_cor_kpca = dist_cor_tsne = dist_cor_umap = 0
+  
+  og_trust_kpca = og_trust_tsne = og_trust_umap = 0
+  og_cont_kpca = og_cont_tsne = og_cont_umap = 0
+  og_prec_kpca = og_prec_tsne = og_prec_umap = 0
+  og_stress_kpca = og_stress_tsne = og_stress_umap = 0
+  og_local_stress_kpca = og_local_stress_tsne = og_local_stress_umap = 0
+  og_dist_cor_kpca = og_dist_cor_tsne = og_dist_cor_umap = 0
+  
+  for (j in 1:b) {
+    new_pt = new_pts[j,]
+    
+    A2 = as.matrix(dist(rbind(Z,new_pt), method = "minkowski", p = 2)^2)
+    x_kpca = Trosset_approx(X_mds, A2)
+    
+    x_tsne = py_to_r(predict_tsne(trans_tsne, matrix(new_pt, nrow=1)))
+    x_umap = predict(trans_umap, matrix(new_pt, nrow=1))
+    
+    trust_kpca = trust_kpca + trustworthiness(Y, y[i,], X_mds, x_kpca, k)
+    cont_kpca = cont_kpca + continuity(Y, y[i,], X_mds, x_kpca, k)
+    prec_kpca = prec_kpca + precision(Y, y[i,], X_mds, x_kpca, k)
+    stress_kpca = stress_kpca + stress(Y, y[i,], X_mds, x_kpca)
+    local_stress_kpca = local_stress_kpca + local_stress(Y, y[i,], X_mds, x_kpca, k)
+    dist_cor_kpca = dist_cor_kpca + dist_cor(Y, y[i,], X_mds, x_kpca)
+    
+    trust_tsne = trust_tsne + trustworthiness(Y, y[i,], X_tsne, x_tsne, k)
+    cont_tsne = cont_tsne + continuity(Y, y[i,], X_tsne, x_tsne, k)
+    prec_tsne = prec_tsne + precision(Y, y[i,], X_tsne, x_tsne, k)
+    stress_tsne = stress_tsne + stress(Y, y[i,], X_tsne, x_tsne)
+    local_stress_tsne = local_stress_tsne + local_stress(Y, y[i,], X_tsne, x_tsne, k)
+    dist_cor_tsne = dist_cor_tsne + dist_cor(Y, y[i,], X_tsne, x_tsne)
+    
+    trust_umap = trust_umap + trustworthiness(Y, y[i,], X_umap, x_umap, k)
+    cont_umap = cont_umap + continuity(Y, y[i,], X_umap, x_umap, k)
+    prec_umap = prec_umap + precision(Y, y[i,], X_umap, x_umap, k)
+    stress_umap = stress_umap + stress(Y, y[i,], X_umap, x_umap)
+    local_stress_umap = local_stress_umap + local_stress(Y, y[i,], X_umap, x_umap, k)
+    dist_cor_umap = dist_cor_umap + dist_cor(Y, y[i,], X_umap, x_umap)
+    
+    og_trust_kpca = og_trust_kpca + trustworthiness(Z, new_pt, X_mds, x_kpca, k)
+    og_cont_kpca = og_cont_kpca + continuity(Z, new_pt, X_mds, x_kpca, k)
+    og_prec_kpca = og_prec_kpca + precision(Z, new_pt, X_mds, x_kpca, k)
+    og_stress_kpca = og_stress_kpca + stress(Z, new_pt, X_mds, x_kpca)
+    og_local_stress_kpca = og_local_stress_kpca + local_stress(Z, new_pt, X_mds, x_kpca, k)
+    og_dist_cor_kpca = og_dist_cor_kpca + dist_cor(Z, new_pt, X_mds, x_kpca)
+    
+    og_trust_tsne = og_trust_tsne + trustworthiness(Z, new_pt, X_tsne, x_tsne, k)
+    og_cont_tsne = og_cont_tsne + continuity(Z, new_pt, X_tsne, x_tsne, k)
+    og_prec_tsne = og_prec_tsne + precision(Z, new_pt, X_tsne, x_tsne, k)
+    og_stress_tsne = og_stress_tsne + stress(Z, new_pt, X_tsne, x_tsne)
+    og_local_stress_tsne = og_local_stress_tsne + local_stress(Z, new_pt, X_tsne, x_tsne, k)
+    og_dist_cor_tsne = og_dist_cor_tsne + dist_cor(Z, new_pt, X_tsne, x_tsne)
+    
+    og_trust_umap = og_trust_umap + trustworthiness(Z, new_pt, X_umap, x_umap, k)
+    og_cont_umap = og_cont_umap + continuity(Z, new_pt, X_umap, x_umap, k)
+    og_prec_umap = og_prec_umap + precision(Z, new_pt, X_umap, x_umap, k)
+    og_stress_umap = og_stress_umap + stress(Z, new_pt, X_umap, x_umap)
+    og_local_stress_umap = og_local_stress_umap + local_stress(Z, new_pt, X_umap, x_umap, k)
+    og_dist_cor_umap = og_dist_cor_umap + dist_cor(Z, new_pt, X_umap, x_umap)
+  }
+  
+  risks_kpca[i,] = c(trust_kpca/b, cont_kpca/b, prec_kpca/b, stress_kpca/b, local_stress_kpca/b,
+                     dist_cor_kpca/b)
+  risks_tsne[i,] = c(trust_tsne/b, cont_tsne/b, prec_tsne/b, stress_tsne/b, local_stress_tsne/b,
+                     dist_cor_tsne/b)
+  risks_umap[i,] = c(trust_umap/b, cont_umap/b, prec_umap/b, stress_umap/b, local_stress_umap/b,
+                     dist_cor_umap/b)
+  
+  og_errors_kpca[i,] = c(og_trust_kpca/b, og_cont_kpca/b, og_prec_kpca/b, og_stress_kpca/b,
+                         og_local_stress_kpca/b, og_dist_cor_kpca/b)
+  og_errors_tsne[i,] = c(og_trust_tsne/b, og_cont_tsne/b, og_prec_tsne/b, og_stress_tsne/b,
+                         og_local_stress_tsne/b, og_dist_cor_tsne/b)
+  og_errors_umap[i,] = c(og_trust_umap/b, og_cont_umap/b, og_prec_umap/b, og_stress_umap/b,
+                         og_local_stress_umap/b, og_dist_cor_umap/b)
+}
+```
+
+```{r, include=FALSE}
+df = data.frame(trust = c(risks_kpca[,1], risks_tsne[,1], risks_umap[,1]),
+                cont = c(risks_kpca[,2], risks_tsne[,2], risks_umap[,2]),
+                prec = c(risks_kpca[,3], risks_tsne[,3], risks_umap[,3]),
+                stress = c(risks_kpca[,4], risks_tsne[,4], risks_umap[,4]),
+                local_stress = c(risks_kpca[,5], risks_tsne[,5], risks_umap[,5]),
+                dist_cor = c(risks_kpca[,6], risks_tsne[,6], risks_umap[,6]),
+                type = c(rep("kPCA", num_pts), rep("t-SNE", num_pts), rep("UMAP", num_pts)))
+
+df_diff = as.data.frame(rbind(og_errors_kpca - risks_kpca,
+                              og_errors_tsne - risks_tsne,
+                              og_errors_umap - risks_umap)) %>%
+  set_colnames(c("trust", "cont", "prec", "stress", "local_stress", "dist_cor")) %>%
+  mutate(type = c(rep("kPCA", num_pts), rep("t-SNE", num_pts), rep("UMAP", num_pts)))
+```
+
+
+```{r, fig.width=12, fig.height=14}
+p1 = ggplot(df, aes(x = trust, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+p2 = ggplot(df, aes(x = cont, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+p3 = ggplot(df, aes(x = prec, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+p4 = ggplot(df, aes(x = stress, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+p5 = ggplot(df, aes(x = local_stress, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+p6 = ggplot(df, aes(x = dist_cor, y = type, color = type, group = type)) + geom_boxplot() + xlim(0,1)
+
+grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 2)
+```
+
+
+```{r, fig.width=12, fig.height=14}
+p1 = ggplot(df_diff, aes(x = trust, y = type, color = type, group = type)) + geom_boxplot()
+p2 = ggplot(df_diff, aes(x = cont, y = type, color = type, group = type)) + geom_boxplot()
+p3 = ggplot(df_diff, aes(x = prec, y = type, color = type, group = type)) + geom_boxplot()
+p4 = ggplot(df_diff, aes(x = stress, y = type, color = type, group = type)) + geom_boxplot()
+p5 = ggplot(df_diff, aes(x = local_stress, y = type, color = type, group = type)) + geom_boxplot()
+p6 = ggplot(df_diff, aes(x = dist_cor, y = type, color = type, group = type)) + geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 2)
+```
+

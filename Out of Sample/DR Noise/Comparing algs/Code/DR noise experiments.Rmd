@@ -1,0 +1,175 @@
+---
+title: "DR Noise Experiments"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(tidyverse)
+library(gridExtra)
+library(readxl)
+library(viridis)
+library(akima)
+library(umap)
+
+source("../../Algorithms/Out of sample algs.R")
+source("../../Algorithms/Out of sample metrics.R")
+source("../../Algorithms/Plotting tools.R")
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r, include=FALSE}
+data = read_excel("../../Breast Cancer Example/breast cancer data.xlsx", col_names = FALSE)
+
+data = data %>%
+  select(-c(1,2))
+```
+
+```{r, include=FALSE}
+Z = unname(as.matrix(data))
+vars = diag(var(Z))
+
+pca = prcomp(Z, center = TRUE, scale. = TRUE, tol = 0.1)
+
+Y = pca$x
+Y_emb = t(t(Y %*% t(pca$rotation)) * pca$scale + pca$center)
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+r = dim(Y)[2]
+q = 2
+```
+
+```{r}
+X_mds = cmdscale(dist(Z, method = "minkowski", p = 2))
+
+perp = 30
+trans_tsne = tsne(Z, perp)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Z, method = 'umap-learn', n_neighbors = 30, n_components = q)
+X_umap = trans_umap$layout
+
+plot(X_mds)
+plot(X_tsne)
+plot(X_umap)
+```
+
+```{r, include=FALSE}
+b = 40
+num_pts = 40
+indices = sample(1:n, num_pts)
+
+y = Y[indices,]
+z = t(t(y %*% t(pca$rotation)) * pca$scale + pca$center)
+
+
+risks_kpca = risks_tsne = risks_umap = matrix(nrow = num_pts, ncol = 5)
+
+for (i in 1:num_pts) {
+  new_pts = matrix(rep(z[i,], each = b), nrow = b) + matrix(rnorm(b * p, 0, rep(sqrt(vars/10), b)), nrow = b)
+  
+  trusts_kpca = trusts_tsne = trusts_umap = 0
+  cont_kpca = cont_tsne = cont_umap = 0
+  prec_kpca = prec_tsne = prec_umap = 0
+  stresses_kpca = stresses_tsne = stresses_umap = 0
+  dist_cor_kpca = dist_cor_tsne = dist_cor_umap = 0
+  
+  xs_tsne = py_to_r(predict_tsne(trans_tsne, new_pts))
+  xs_umap = predict(trans_umap, new_pts)
+  
+  for (j in 1:b) {
+    new_pt = new_pts[j,]
+    
+    A2 = as.matrix(dist(rbind(Z,new_pt), method = "minkowski", p = 2)^2)
+    x_kpca = Trosset_approx(X_mds, A2)
+    
+    x_tsne = xs_tsne[j,]
+    x_umap = xs_umap[j,]
+    
+    trusts_kpca = trusts_kpca + trustworthiness(Y, y[i,], X_mds, x_kpca, k = perp)
+    cont_kpca = cont_kpca + continuity(Y, y[i,], X_mds, x_kpca, k = perp)
+    prec_kpca = prec_kpca + precision(Y, y[i,], X_mds, x_kpca, k = perp)
+    stresses_kpca = stresses_kpca + stress(Y, y[i,], X_mds, x_kpca)
+    dist_cor_kpca = dist_cor_kpca + dist_cor(Y, y[i,], X_mds, x_kpca)
+    
+    trusts_tsne = trusts_tsne + trustworthiness(Y, y[i,], X_tsne, x_tsne, k = perp)
+    cont_tsne = cont_tsne + continuity(Y, y[i,], X_tsne, x_tsne, k = perp)
+    prec_tsne = prec_tsne + precision(Y, y[i,], X_tsne, x_tsne, k = perp)
+    stresses_tsne = stresses_tsne + stress(Y, y[i,], X_tsne, x_tsne)
+    dist_cor_tsne = dist_cor_tsne + dist_cor(Y, y[i,], X_tsne, x_tsne)
+    
+    trusts_umap = trusts_umap + trustworthiness(Y, y[i,], X_umap, x_umap, k = perp)
+    cont_umap = cont_umap + continuity(Y, y[i,], X_umap, x_umap, k = perp)
+    prec_umap = prec_umap + precision(Y, y[i,], X_umap, x_umap, k = perp)
+    stresses_umap = stresses_umap + stress(Y, y[i,], X_umap, x_umap)
+    dist_cor_umap = dist_cor_umap + dist_cor(Y, y[i,], X_umap, x_umap)
+  }
+  
+  risks_kpca[i,] = c(trusts_kpca/b, cont_kpca/b, prec_kpca/b, stresses_kpca/b, dist_cor_kpca/b)
+  risks_tsne[i,] = c(trusts_tsne/b, cont_tsne/b, prec_tsne/b, stresses_tsne/b, dist_cor_tsne/b)
+  risks_umap[i,] = c(trusts_umap/b, cont_umap/b, prec_umap/b, stresses_umap/b, dist_cor_umap/b)
+}
+
+```
+
+
+```{r show kpca plots, fig.height=18, fig.width=12}
+create_plots(X_mds, risks_kpca, X_tsne, risks_tsne, X_umap, risks_umap, indices)
+```
+
+
+```{r, include=FALSE}
+og_errors_kpca = matrix(nrow = num_pts, ncol = 5)
+og_errors_tsne = matrix(nrow = num_pts, ncol = 5)
+og_errors_umap = matrix(nrow = num_pts, ncol = 5)
+
+og_xs_tsne = py_to_r(predict_tsne(trans_tsne, z))
+og_xs_umap = predict(trans_umap, z)
+
+for (i in 1:num_pts) {
+  new_pt = Z[indices[i],]
+  
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  og_x_kpca = Trosset_approx(X_mds, A2)
+  
+  og_x_tsne = og_xs_tsne[i,]
+  og_x_umap = og_xs_umap[i,]
+  
+  og_errors_kpca[i,1] = trustworthiness(Y, y[i,], X_mds, og_x_kpca, k = perp)
+  og_errors_kpca[i,2] = continuity(Y, y[i,], X_mds, og_x_kpca, k = perp)
+  og_errors_kpca[i,3] = precision(Y, y[i,], X_mds, og_x_kpca, k = perp)
+  og_errors_kpca[i,4] = stress(Y, y[i,], X_mds, og_x_kpca)
+  og_errors_kpca[i,5] = dist_cor(Y, y[i,], X_mds, og_x_kpca)
+  
+  og_errors_tsne[i,1] = trustworthiness(Y, y[i,], X_tsne, og_x_tsne, k = perp)
+  og_errors_tsne[i,2] = continuity(Y, y[i,], X_tsne, og_x_tsne, k = perp)
+  og_errors_tsne[i,3] = precision(Y, y[i,], X_tsne, og_x_tsne, k = perp)
+  og_errors_tsne[i,4] = stress(Y, y[i,], X_tsne, og_x_tsne)
+  og_errors_tsne[i,5] = dist_cor(Y, y[i,], X_tsne, og_x_tsne)
+  
+  og_errors_umap[i,1] = trustworthiness(Y, y[i,], X_umap, og_x_umap, k = perp)
+  og_errors_umap[i,2] = continuity(Y, y[i,], X_umap, og_x_umap, k = perp)
+  og_errors_umap[i,3] = precision(Y, y[i,], X_umap, og_x_umap, k = perp)
+  og_errors_umap[i,4] = stress(Y, y[i,], X_umap, og_x_umap)
+  og_errors_umap[i,5] = dist_cor(Y, y[i,], X_umap, og_x_umap)
+}
+```
+
+
+```{r, fig.height=12, fig.height=12}
+create_hist(og_errors_kpca - risks_kpca, og_errors_umap - risks_umap, og_errors_tsne - risks_tsne, types = c("kPCA", "UMAP", "t-SNE"), num_per_type = 40)
+```
+

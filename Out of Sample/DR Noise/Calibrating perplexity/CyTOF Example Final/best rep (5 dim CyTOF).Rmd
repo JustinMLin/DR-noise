@@ -1,0 +1,49 @@
+---
+title: "5 Dim CyTOF Representations"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(encoding = "utf-8")
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+
+load("best rep (5 dim CyTOF).Rda")
+```
+
+```{r}
+library(cluster)
+library(factoextra)
+fviz_nbclust(Z, kmeans, method = "wss")
+fviz_nbclust(Z, kmeans, method = "silhouette")
+#clusOut = clusGap(x = Z, FUNcluster = kmeans, K.max = 10, iter.max = 50, nstart = 30)
+#plot(clusOut, main="Gap Statistic")
+```
+
+
+```{r}
+cluster = kmeans(Z, centers=3, iter.max=50, nstart=20)$cluster
+hier = hclust(dist(Z, method="manhattan"), method="ward.D2")
+cluster1 = cutree(hier, k=2)
+```
+
+
+```{r, fig.width=18, fig.height=6, echo=FALSE}
+p1 = data.frame(x=best_X[,1], y=-best_X[,2], col=factor(cluster1)) %>%
+  ggplot(aes(x=x, y=y, color=col)) +
+  geom_point(size=1) +
+  labs(x="", y="", title="Replicating Signal \n(perplexity = 110)")
+
+p2 = data.frame(x=best_X_noise[,1], y=best_X_noise[,2], col=factor(cluster1)) %>%
+  ggplot(aes(x=x, y=y, color=col)) +
+  geom_point(size=1) +
+  labs(x="", y="", title="Replicating Signal + Noise \n(perplexity = 50)")
+
+grid.arrange(p2, p1, nrow=1)
+```
+

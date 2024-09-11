@@ -1,0 +1,153 @@
+---
+title: "n_neighbors affects dimension r stress"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(umap)
+library(gridExtra)
+library(ggplot2)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+
+set.seed(1232)
+```
+
+```{r}
+get_var = function(name, num) {
+  get(paste(name, num, sep=""))
+}
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+
+```{r}
+Z = cbind(matrix(rnorm(100*6, sd = 5), nrow = 100), matrix(0, nrow = 100, ncol = 4)) + 
+  matrix(rnorm(100*10, sd = 1), nrow = 100)
+vars = diag(var(Z))
+
+r = c(4,6,8)
+k = 10
+
+for (i in 1:length(r)) {
+  assign(paste("pca", i, sep = ""), prcomp(Z, center = TRUE, rank = r[i]))
+  assign(paste("Y", i, sep=""), get_var("pca", i)$x)
+  assign(paste("Y_emb", i, sep=""),
+         t(t(get_var("Y", i) %*% t(get_var("pca", i)$rotation)) + get_var("pca", i)$center))
+}
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+q = 2
+
+var_explained = pca1$sdev^2 / sum(pca1$sdev^2)
+plot(var_explained)
+lines(var_explained)
+```
+
+```{r}
+n_neighbors = c(10, 12, 14, 16, 18)
+
+for (i in 1:length(n_neighbors)) {
+  assign(paste("trans_umap", i, sep=""), umap(Z, method = 'umap-learn', n_neighbors = n_neighbors[i], n_components = q))
+  assign(paste("X_umap", i, sep=""), eval(parse(text = paste("trans_umap", i, sep="")))$layout)
+}
+```
+
+```{r, include=FALSE}
+b = 40
+num_pts = 40
+indices = sample(1:n, num_pts)
+
+for (i in 1:length(r)) {
+  assign(paste("y", i, sep=""), get_var("Y", i)[indices,])
+  assign(paste("z", i, sep=""),
+         t(t(get_var("y", i) %*% t(get_var("pca", i)$rotation)) + get_var("pca", i)$center))
+}
+```
+
+```{r, include=FALSE}
+noise_proportion = 0.5
+
+for (i in 1:length(r)) {
+  for (j in 1:length(n_neighbors)) {
+    assign(paste("stress", i, j, sep=""), vector(length = num_pts))
+    assign(paste("local_stress", i, j, sep=""), vector(length = num_pts))
+    
+    for (k in 1:num_pts) {
+      new_pts = matrix(rep(get_var("z", i)[k,], each = b), nrow = b) + matrix(rnorm(b * p, 0, rep(sqrt(vars*noise_proportion), b)),
+                                                                        nrow = b)
+      stresses = local_stresses = 0
+      
+      for (l in 1:b) {
+        new_pt = new_pts[l,]
+        x_umap = predict(eval(parse(text = paste("trans_umap", i, sep=""))), matrix(new_pt, nrow=1))
+        
+        stresses = stresses + stress(get_var("Y", i), get_var("y", i)[k,], eval(parse(text = paste("X_umap", j, sep=""))), x_umap)
+        local_stresses = local_stresses + local_stress(get_var("Y", i), 
+                                                       get_var("y", i)[k,], 
+                                                       eval(parse(text = paste("X_umap", j, sep=""))), 
+                                                       x_umap, 
+                                                       k)
+      }
+      eval(parse(text = paste("stress", i, j, "[k] = stresses/b", sep="")))
+      eval(parse(text = paste("local_stress", i, j, "[k] = local_stresses/b", sep="")))
+    }
+  }
+}
+```
+
+
+```{r, echo = FALSE, fig.height = 16, fig.width=12}
+x_max = 1
+
+data_perp1 = data.frame(stress = c(stress11, stress21, stress31),
+                        local_stress = c(local_stress11, local_stress21, local_stress31),
+                        r = rep(r, each=num_pts))
+data_perp2 = data.frame(stress = c(stress12, stress22, stress32),
+                        local_stress = c(local_stress12, local_stress22, local_stress32),
+                        r = rep(r, each=num_pts))
+data_perp3 = data.frame(stress = c(stress13, stress23, stress33),
+                        local_stress = c(local_stress13, local_stress23, local_stress33),
+                        r = rep(r, each=num_pts))
+data_perp4 = data.frame(stress = c(stress14, stress24, stress34),
+                        local_stress = c(local_stress14, local_stress24, local_stress34),
+                        r = rep(r, each=num_pts))
+data_perp5 = data.frame(stress = c(stress15, stress25, stress35),
+                        local_stress = c(local_stress15, local_stress25, local_stress35),
+                        r = rep(r, each=num_pts))
+
+p11 = ggplot(data_perp1, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 10") + xlim(0,x_max)
+p21 = ggplot(data_perp2, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 12") + xlim(0,x_max)
+p31 = ggplot(data_perp3, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 14") + xlim(0,x_max)
+p41 = ggplot(data_perp4, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 16") + xlim(0,x_max)
+p51 = ggplot(data_perp5, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 18") + xlim(0,x_max)
+
+p12 = ggplot(data_perp1, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 10") + xlim(0,x_max)
+p22 = ggplot(data_perp2, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 12") + xlim(0,x_max)
+p32 = ggplot(data_perp3, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 14") + xlim(0,x_max)
+p42 = ggplot(data_perp4, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 16") + xlim(0,x_max)
+p52 = ggplot(data_perp5, aes(x = local_stress, group = r, y = r, color = r)) + geom_boxplot() + ggtitle("n_neighbors = 18") + xlim(0,x_max)
+
+grid.arrange(p11, p12, 
+             p21, p22,
+             p31, p32,
+             p41, p42,
+             p51, p52,
+             ncol = 2)
+```

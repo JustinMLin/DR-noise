@@ -1,0 +1,134 @@
+---
+title: "Trust vs. Shep plot (links)"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(MASS)
+library(dplyr)
+library(Rtsne)
+library(scatterplot3d)
+library(viridis)
+library(gridExtra)
+
+source("../../../Algorithms/DR metrics.R")
+```
+
+```{r}
+n = 500
+r = 3
+p = 10
+noise_sd = 1
+
+theta = seq(from = 0, to = 2*pi, length.out = n/2 + 1)[-1]
+
+x1 = 5*cos(theta)
+y1 = 5*sin(theta)
+z1 = rep(0, n/2)
+
+x2 = 5*cos(theta) + 5
+y2 = rep(0, n/2)
+z2 = 5*sin(theta)
+
+Y = matrix(c(x1, x2, y1, y2, z1, z2), nrow = n, ncol = 3)
+
+Z = cbind(Y, matrix(0, nrow = n, ncol = p-r)) + 
+          matrix(rnorm(n*p, sd = noise_sd), nrow = n, ncol = p)
+
+scatterplot3d(Y)
+
+X_tsne = Rtsne(Y, perplexity = 30)$Y
+
+data.frame(x = X_tsne[,1], y = X_tsne[,2], type = c(rep(1, n/2), rep(2, n/2))) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + geom_point() + coord_equal()
+```
+```{r, signal}
+perplexity = seq(from = 20, to = 50, by = 5)
+b = 20
+k = 10
+
+trusts = sheps = vector(length = length(perplexity)*b)
+
+for (i in 1:length(perplexity)) {
+  for (j in 1:b) {
+    X_tsne = Rtsne(Z, perplexity = perplexity[i])$Y
+    
+    trusts[(i-1)*b + j] = trustworthiness_full(Y, X_tsne, k)
+    sheps[(i-1)*b + j] = dist_cor_full(Y, X_tsne)
+  }
+}
+```
+
+
+```{r}
+perplexity_noise = seq(from = 80, to = 130, by = 5)
+b = 20
+k = 10
+
+trusts_noise = sheps_noise = vector(length = length(perplexity)*b)
+
+for (i in 1:length(perplexity)) {
+  for (j in 1:b) {
+    X_tsne = Rtsne(Z, perplexity = perplexity[i])$Y
+    
+    trusts_noise[(i-1)*b + j] = trustworthiness_full(Z, X_tsne, k)
+    sheps_noise[(i-1)*b + j] = dist_cor_full(Z, X_tsne)
+  }
+}
+```
+
+```{r, echo=FALSE, fig.width=18, fig.height=6}
+df = data.frame(perplexity = rep(perplexity, each = b),
+                trust = trusts,
+                shep = sheps)
+df_noise = data.frame(perplexity = rep(perplexity_noise, each = b),
+                trust = trusts_noise,
+                shep = sheps_noise)
+
+p1 = ggplot(df, aes(x = trust, y = shep, col = perplexity)) + 
+  geom_point(size = 2) + 
+  scale_color_viridis() + 
+  labs(x = "Trustworthiness", y = "Shepard Goodness", title = "Replicating Signal")
+  
+p2 = ggplot(df_noise), aes(x = trust, y = shep, col = perplexity)) + 
+  geom_point(size = 2) + 
+  scale_color_viridis() + 
+  labs(x = "Trustworthiness", y = "Shepard Goodness", title = "Replicating Signal")
+
+grid.arrange(p2, p1, nrow = 1)
+```
+
+```{r}
+# save(Y, df, p1, p2, file = "../Data/trust vs shep (links).Rda")
+```
+
+```{r, fig.width=18, fig.height=6}
+q1 = ggplot(df, aes(x = perplexity, y = trust, col = perplexity)) + 
+  geom_point(size = 2) +
+  scale_color_viridis() + 
+  labs(x = "Perplexity", y = "Trustworthiness", title = "Replicating Signal")
+
+q2 = ggplot(df, aes(x = perplexity, y = trust_noise, col = perplexity)) + 
+  geom_point(size = 2) +
+  scale_color_viridis() + 
+  labs(x = "Perplexity", y = "Trustworthiness", title = "Replicating Signal + Noise")
+
+q3 = ggplot(df, aes(x = perplexity, y = shep, col = perplexity)) + 
+  geom_point(size = 2) +
+  scale_color_viridis() + 
+  labs(x = "Perplexity", y = "Shepard Goodness", title = "Replicating Signal")
+
+q4 = ggplot(df, aes(x = perplexity, y = shep_noise, col = perplexity)) + 
+  geom_point(size = 2) +
+  scale_color_viridis() + 
+  labs(x = "Perplexity", y = "Shepard Goodness", title = "Replicating Signal + Noise")
+
+grid.arrange(q2, q1, nrow = 1)
+grid.arrange(q4, q3, nrow = 1)
+```
+

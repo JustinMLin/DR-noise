@@ -1,0 +1,66 @@
+---
+title: "10x example small"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(readr)
+library(dbscan)
+library(irlba)
+
+load("../../../../../10x Data/10x data.Rda")
+load("10x example small.Rda")
+```
+
+```{r}
+mat = as.matrix(new_data)
+total_var = sum(diag(t(mat) %*% mat))/nrow(mat)
+gc()
+
+sum(pca$sdev^2)/total_var
+```
+
+```{r, fig.width=10, fig.height=6}
+test = sapply(pca$sdev[1:100]^2, function(x) min(x, 100))
+
+data.frame(x=1:100, sd=test) %>%
+  ggplot(aes(x=x, y=sd)) +
+  geom_col() + 
+  ylim(0,100)
+```
+
+
+```{r, fig.width=10, fig.height=6}
+p1 = ggplot(df, aes(x=n_neighbors, y=trust_noise)) +
+  geom_point(size = 2) +
+  geom_smooth(method="loess", se=FALSE, color="red") +
+  labs(title = "Replicating Signal + Noise", x = "n_neighbors", y = "Trustworthiness")
+
+p2 = ggplot(df, aes(x=n_neighbors, y=trust)) +
+  geom_point(size = 2) +
+  geom_smooth(method="loess", se=FALSE, color="red") +
+  labs(title = "Replicating Signal", x = "n_neighbors", y = "Trustworthiness")
+
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+```{r, fig.width=16, fig.height=5}
+cluster = kmeans(pca$x[subsample,1:20], centers=3, nstart=50)
+
+q1 = data.frame(x=best_X[,1], y=best_X[,2], col=cluster$cluster) %>%
+  ggplot(aes(x=x, y=y, color=factor(col))) +
+  geom_point()
+
+q2 = data.frame(x=best_X_noise[,1], y=best_X_noise[,2], col=cluster$cluster) %>%
+  ggplot(aes(x=x, y=y, color=factor(col))) +
+  geom_point()
+
+grid.arrange(q2, q1, nrow=1)
+```

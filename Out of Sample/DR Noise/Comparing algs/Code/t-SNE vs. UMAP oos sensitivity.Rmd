@@ -1,0 +1,104 @@
+---
+title: "t-SNE vs. UMAP OoS Sensitivity"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(gridExtra)
+library(umap)
+library(MASS)
+library(magrittr)
+library(dplyr)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r}
+n = 100
+r = 6
+p = 10
+q = 2
+
+perplexity = 30
+n_neighbors = 15
+k = 10
+noise_sd = 0.2
+
+Y = mvrnorm(n, rep(0,r), diag(2, nrow = r))
+Z = cbind(Y, matrix(0, nrow = n, ncol = p - r)) + matrix(rnorm(n*p, sd = noise_sd), nrow = n, ncol = p)
+```
+
+```{r}
+X_mds = cmdscale(dist(Z))
+
+trans_tsne = tsne(Z, perplexity)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Z, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+X_umap = trans_umap$layout
+```
+
+
+```{r, include=FALSE}
+b = 100
+
+new_vals = c(0, 1, 2, 3)
+
+new_pts = matrix(nrow = length(new_vals)*b, ncol = p)
+
+for (i in 1:length(new_vals)) {
+  new_pts[((i-1)*b + 1):(i*b),] = matrix(c(rep(new_vals[i], b), rep(0, b*(p-1))), nrow = b, ncol = p)
+}
+
+new_pts = new_pts + matrix(rnorm(length(new_vals)*b*p, sd = noise_sd), nrow = length(new_vals)*b, ncol = p)
+```
+
+```{r}
+kpca_pts = tsne_pts = umap_pts = matrix(nrow = length(new_vals)*b, ncol = q)
+
+for (i in 1:(length(new_vals)*b)) {
+  A2 = as.matrix(dist(rbind(Z,new_pts[i,]), method = "minkowski", p = 2)^2)
+  
+  kpca_pts[i,] = Trosset_approx(X_mds, A2)
+  tsne_pts[i,] = py_to_r(predict_tsne(trans_tsne, matrix(new_pts[i,], nrow = 1)))
+  umap_pts[i,] = predict(trans_umap, matrix(new_pts[i,], nrow = 1))
+}
+```
+
+```{r}
+data.frame(x = c(X_mds[,1], kpca_pts[,1]),
+           y = c(X_mds[,2], kpca_pts[,2]),
+           type = c(rep(1, n), rep(2, b), rep(3, b), rep(4, b), rep(5, b))) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + geom_point()
+
+data.frame(x = c(X_tsne[,1], tsne_pts[,1]),
+           y = c(X_tsne[,2], tsne_pts[,2]),
+           type = c(rep(1, n), rep(2, b), rep(3, b), rep(4, b), rep(5, b))) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + geom_point()
+
+data.frame(x = c(X_umap[,1], umap_pts[,1]),
+           y = c(X_umap[,2], umap_pts[,2]),
+           type = c(rep(1, n), rep(2, b), rep(3, b), rep(4, b), rep(5, b))) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + geom_point()
+```
+
+

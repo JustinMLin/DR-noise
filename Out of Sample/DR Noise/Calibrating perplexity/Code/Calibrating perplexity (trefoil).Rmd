@@ -1,0 +1,181 @@
+---
+title: "Calibrating Perplexity"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(gridExtra)
+library(MASS)
+library(dplyr)
+library(Rtsne)
+library(scatterplot3d)
+
+source("../../../Algorithms/DR metrics.R")
+```
+
+```{r}
+n = 200
+r = 3
+
+theta = seq(from = 0, to = 2*pi, length.out = n + 1)[-1]
+
+x = sin(theta) + 2*sin(2*theta)
+y = cos(theta) - 2*cos(2*theta)
+z = -sin(3*theta)
+
+Y = matrix(2*c(x, y, z), nrow = n, ncol = 3)
+
+scatterplot3d(Y)
+```
+
+```{r, include=FALSE}
+p = 9
+q = 2
+
+k = 5
+noise_sd = 1
+b = 40
+perplexity = c(20, 30, 40, 50, 60)
+
+tsne_error = tsne_noise_error = matrix(nrow = b*length(perplexity), ncol = 3)
+
+for (i in 1:length(perplexity)) {
+  error = noise_error = matrix(nrow = b, ncol = 3)
+  
+  for (j in 1:b) {
+    Z = cbind(Y, matrix(0, nrow = n, ncol = p - r)) + matrix(rnorm(n*p, sd = noise_sd), nrow = n, ncol = p)
+    
+    X_tsne = Rtsne(Z, perplexity = perplexity[i])$Y
+    
+    error[j,1] = trustworthiness_full(Y, X_tsne, k)
+    error[j,2] = local_stress_full(Y, X_tsne, k)
+    error[j,3] = dist_cor_full(Y, X_tsne)
+    
+    noise_error[j,1] = trustworthiness_full(Z, X_tsne, k)
+    noise_error[j,2] = local_stress_full(Z, X_tsne, k)
+    noise_error[j,3] = dist_cor_full(Z, X_tsne)
+  }
+  
+  tsne_error[((i-1)*b + 1):(i*b),] = error
+  tsne_noise_error[((i-1)*b + 1):(i*b),] = noise_error
+}
+```
+
+```{r, include=FALSE}
+df_error = data.frame(trust = tsne_error[,1],
+                      stress = tsne_error[,2],
+                      dist_cor = tsne_error[,3],
+                      perplexity = rep(perplexity, each=b))
+
+df_noise_error = data.frame(trust = tsne_noise_error[,1],
+                            stress = tsne_noise_error[,2],
+                            dist_cor = tsne_noise_error[,3],
+                            perplexity = rep(perplexity, each=b))
+```
+
+```{r, echo=FALSE, fig.height=12, fig.width=16}
+p1 = ggplot(df_error, aes(x = trust, 
+                          y = factor(perplexity), 
+                          group = factor(perplexity), 
+                          col = factor(perplexity))) + 
+  geom_boxplot(show.legend = FALSE) + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "perplexity")
+
+p2 = ggplot(df_error, aes(x = stress, 
+                          y = factor(perplexity), 
+                          group = factor(perplexity), 
+                          col = factor(perplexity))) + 
+  geom_boxplot(show.legend = FALSE) + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "perplexity")
+
+p3 = ggplot(df_error, aes(x = dist_cor, 
+                          y = factor(perplexity), 
+                          group = factor(perplexity), 
+                          col = factor(perplexity))) + 
+  geom_boxplot(show.legend = FALSE) + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "perplexity")
+
+q1 = ggplot(df_noise_error, aes(x = trust, 
+                                y = factor(perplexity), 
+                                group = factor(perplexity), 
+                                col = factor(perplexity))) + 
+  geom_boxplot() + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "")
+
+q2 = ggplot(df_noise_error, aes(x = stress, 
+                                y = factor(perplexity), 
+                                group = factor(perplexity), 
+                                col = factor(perplexity))) + 
+  geom_boxplot() + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "")
+
+q3 = ggplot(df_noise_error, aes(x = dist_cor, 
+                                y = factor(perplexity), 
+                                group = factor(perplexity), 
+                                col = factor(perplexity))) + 
+  geom_boxplot() + 
+  stat_summary(fun.y=mean, geom="point", shape=18, size=3, color="black", fill="black") +
+  labs(y = "")
+
+grid.arrange(p1, q1, p2, q2, p3, q3, ncol = 2)
+```
+
+```{r, echo=FALSE, fig.width=16}
+perp1 = Rtsne(Z, perplexity = perplexity[1])$Y
+perp2 = Rtsne(Z, perplexity = perplexity[2])$Y
+perp3 = Rtsne(Z, perplexity = perplexity[3])$Y
+perp4 = Rtsne(Z, perplexity = perplexity[4])$Y
+perp5 = Rtsne(Z, perplexity = perplexity[5])$Y
+
+df = data.frame(x = c(perp1[,1], perp2[,1], perp3[,1], perp4[,1], perp5[,1]),
+                y = c(perp1[,2], perp2[,2], perp3[,2], perp4[,2], perp5[,2]),
+                perplexity = rep(perplexity, each = n))
+
+r1 = df %>%
+  filter(perplexity == 20) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  labs(title = "Perplexity = 20") +
+  coord_equal()
+
+r2 = df %>%
+  filter(perplexity == 30) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  labs(title = "Perplexity = 30") +
+  coord_equal()
+
+r3 = df %>%
+  filter(perplexity == 40) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  labs(title = "Perplexity = 40") +
+  coord_equal()
+
+r4 = df %>%
+  filter(perplexity == 50) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  labs(title = "Perplexity = 50") +
+  coord_equal()
+
+r5 = df %>%
+  filter(perplexity == 60) %>%
+  ggplot(aes(x = x, y = y)) + 
+  geom_point() +
+  labs(title = "Perplexity = 60") +
+  coord_equal()
+
+grid.arrange(r1, r2, r3, r4, r5)
+```
+

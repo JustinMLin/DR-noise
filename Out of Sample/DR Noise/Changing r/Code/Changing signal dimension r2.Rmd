@@ -1,0 +1,217 @@
+---
+title: "Changing signal dimension r"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(umap)
+library(gridExtra)
+library(ggplot2)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+source("../../../Algorithms/Plotting tools.R")
+
+set.seed(1232)
+```
+
+```{r}
+get_var = function(name, num) {
+  get(paste(name, num, sep=""))
+}
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r}
+Z = cbind(matrix(rnorm(50*6, sd = 5), nrow = 50), matrix(0, nrow = 50, ncol = 4)) + 
+  matrix(rnorm(50*10, sd = 1), nrow = 50)
+vars = diag(var(Z))
+
+r = c(2,4,6,8,10)
+
+for (i in 1:length(r)) {
+  assign(paste("pca", i, sep = ""), prcomp(Z, center = TRUE, rank = r[i]))
+  assign(paste("Y", i, sep=""), get_var("pca", i)$x)
+  assign(paste("Y_emb", i, sep=""),
+         t(t(get_var("Y", i) %*% t(get_var("pca", i)$rotation)) + get_var("pca", i)$center))
+}
+
+n = dim(Z)[1]
+p = dim(Z)[2]
+q = 2
+
+var_explained = pca1$sdev^2 / sum(pca1$sdev^2)
+plot(var_explained)
+lines(var_explained)
+```
+
+```{r}
+perplexity = 15
+n_neighbors = 10
+k = 10
+
+# X_mds = cmdscale(dist(Z, method = "minkowski", p = 2))
+
+trans_tsne = tsne(Z, perplexity)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Z, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+X_umap = trans_umap$layout
+
+# plot(X_mds)
+plot(X_tsne)
+plot(X_umap)
+```
+
+```{r, include=FALSE}
+b = 40
+num_pts = 40
+indices = sample(1:n, num_pts)
+
+for (i in 1:length(r)) {
+  assign(paste("y", i, sep=""), get_var("Y", i)[indices,])
+  assign(paste("z", i, sep=""),
+         t(t(get_var("y", i) %*% t(get_var("pca", i)$rotation)) + get_var("pca", i)$center))
+}
+```
+
+```{r, include=FALSE}
+noise_proportion = 1
+
+for (l in 1:length(r)) {
+  # assign(paste("risks_kpca", l, sep=""), matrix(nrow = num_pts, ncol = 5))
+  assign(paste("risks_tsne", l, sep=""), matrix(nrow = num_pts, ncol = 5))
+  assign(paste("risks_umap", l, sep=""), matrix(nrow = num_pts, ncol = 5))
+  
+  for (i in 1:num_pts) {
+    new_pts = matrix(rep(get_var("z", l)[i,], each = b), nrow = b) + matrix(rnorm(b * p, 0, rep(sqrt(vars*noise_proportion), b)),
+                                                                        nrow = b)
+  
+    trusts_kpca = trusts_tsne = trusts_umap = 0
+    cont_kpca = cont_tsne = cont_umap = 0
+    prec_kpca = prec_tsne = prec_umap = 0
+    stresses_kpca = stresses_tsne = stresses_umap = 0
+    dist_cor_kpca = dist_cor_tsne = dist_cor_umap = 0
+  
+    for (j in 1:b) {
+      new_pt = new_pts[j,]
+    
+      # A2 = as.matrix(dist(rbind(Z,new_pt), method = "minkowski", p = 2)^2)
+      # x_kpca = Trosset_approx(X_mds, A2)
+    
+      x_tsne = py_to_r(predict_tsne(trans_tsne, matrix(new_pt, nrow=1)))
+      x_umap = predict(trans_umap, matrix(new_pt, nrow=1))
+    
+      # trusts_kpca = trusts_kpca + trustworthiness(get_var("Y", l), get_var("y", l)[i,], X_mds, x_kpca, k = k)
+      # cont_kpca = cont_kpca + continuity(get_var("Y", l), get_var("y", l)[i,], X_mds, x_kpca, k = k)
+      # prec_kpca = prec_kpca + precision(get_var("Y", l), get_var("y", l)[i,], X_mds, x_kpca, k = k)
+      # stresses_kpca = stresses_kpca + stress(get_var("Y", l), get_var("y", l)[i,], X_mds, x_kpca)
+      # dist_cor_kpca = dist_cor_kpca + dist_cor(get_var("Y", l), get_var("y", l)[i,], X_mds, x_kpca)
+    
+      trusts_tsne = trusts_tsne + trustworthiness(get_var("Y", l), get_var("y", l)[i,], X_tsne, x_tsne, k = k)
+      cont_tsne = cont_tsne + continuity(get_var("Y", l), get_var("y", l)[i,], X_tsne, x_tsne, k = k)
+      prec_tsne = prec_tsne + precision(get_var("Y", l), get_var("y", l)[i,], X_tsne, x_tsne, k = k)
+      stresses_tsne = stresses_tsne + stress(get_var("Y", l), get_var("y", l)[i,], X_tsne, x_tsne)
+      dist_cor_tsne = dist_cor_tsne + dist_cor(get_var("Y", l), get_var("y", l)[i,], X_tsne, x_tsne)
+    
+      trusts_umap = trusts_umap + trustworthiness(get_var("Y", l), get_var("y", l)[i,], X_umap, x_umap, k = k)
+      cont_umap = cont_umap + continuity(get_var("Y", l), get_var("y", l)[i,], X_umap, x_umap, k = k)
+      prec_umap = prec_umap + precision(get_var("Y", l), get_var("y", l)[i,], X_umap, x_umap, k = k)
+      stresses_umap = stresses_umap + stress(get_var("Y", l), get_var("y", l)[i,], X_umap, x_umap)
+      dist_cor_umap = dist_cor_umap + dist_cor(get_var("Y", l), get_var("y", l)[i,], X_umap, x_umap)
+    }
+  
+    # eval(parse(text = paste("risks_kpca", l,
+    #                         "[i,] = c(trusts_kpca/b, cont_kpca/b, prec_kpca/b, stresses_kpca/b, dist_cor_kpca/b)",
+    #                         sep="")))
+    eval(parse(text = paste("risks_tsne", l,
+                            "[i,] = c(trusts_tsne/b, cont_tsne/b, prec_tsne/b, stresses_tsne/b, dist_cor_tsne/b)",
+                            sep="")))
+    eval(parse(text = paste("risks_umap", l,
+                            "[i,] = c(trusts_umap/b, cont_umap/b, prec_umap/b, stresses_umap/b, dist_cor_umap/b)",
+                            sep="")))
+  }
+}
+
+
+```
+
+```{r, fig.width=12, fig.height=10, include=FALSE}
+# risks_kpca_all = risks_kpca1
+# for (i in 2:length(r)) {
+#   risks_kpca_all = rbind(risks_kpca_all, get_var("risks_kpca", i))
+# }
+# 
+# data_kpca = data.frame(trust = risks_kpca_all[,1],
+#                        cont = risks_kpca_all[,2],
+#                        prec = risks_kpca_all[,3],
+#                        stress = risks_kpca_all[,4],
+#                        dist_cor = risks_kpca_all[,5],
+#                        r = rep(r, each=num_pts))
+# 
+# p1 = ggplot(data_kpca, aes(x = trust, group = r, y = r, color = r)) + geom_boxplot()
+# p2 = ggplot(data_kpca, aes(x = cont, group = r, y = r, color = r)) + geom_boxplot()
+# p3 = ggplot(data_kpca, aes(x = prec, group = r, y = r, color = r)) + geom_boxplot()
+# p4 = ggplot(data_kpca, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot()
+# p5 = ggplot(data_kpca, aes(x = dist_cor, group = r, y = r, color = r)) + geom_boxplot()
+# 
+# grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+```
+
+```{r, fig.width=12, fig.height=10}
+risks_tsne_all = risks_tsne1
+for (i in 2:length(r)) {
+  risks_tsne_all = rbind(risks_tsne_all, get_var("risks_tsne", i))
+}
+
+data_tsne = data.frame(trust = risks_tsne_all[,1],
+                       cont = risks_tsne_all[,2],
+                       prec = risks_tsne_all[,3],
+                       stress = risks_tsne_all[,4],
+                       dist_cor = risks_tsne_all[,5],
+                       r = rep(r, each=num_pts))
+
+p1 = ggplot(data_tsne, aes(x = trust, group = r, y = r, color = r)) + geom_boxplot()
+p2 = ggplot(data_tsne, aes(x = cont, group = r, y = r, color = r)) + geom_boxplot()
+p3 = ggplot(data_tsne, aes(x = prec, group = r, y = r, color = r)) + geom_boxplot()
+p4 = ggplot(data_tsne, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot()
+p5 = ggplot(data_tsne, aes(x = dist_cor, group = r, y = r, color = r)) + geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+```
+
+```{r, fig.width=12, fig.height=10}
+risks_umap_all = risks_umap1
+for (i in 2:length(r)) {
+  risks_umap_all = rbind(risks_umap_all, get_var("risks_umap", i))
+}
+
+data_umap = data.frame(trust = risks_umap_all[,1],
+                       cont = risks_umap_all[,2],
+                       prec = risks_umap_all[,3],
+                       stress = risks_umap_all[,4],
+                       dist_cor = risks_umap_all[,5],
+                       r = rep(r, each=num_pts))
+
+p1 = ggplot(data_umap, aes(x = trust, group = r, y = r, color = r)) + geom_boxplot()
+p2 = ggplot(data_umap, aes(x = cont, group = r, y = r, color = r)) + geom_boxplot()
+p3 = ggplot(data_umap, aes(x = prec, group = r, y = r, color = r)) + geom_boxplot()
+p4 = ggplot(data_umap, aes(x = stress, group = r, y = r, color = r)) + geom_boxplot()
+p5 = ggplot(data_umap, aes(x = dist_cor, group = r, y = r, color = r)) + geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+```

@@ -1,0 +1,90 @@
+---
+title: "Links vary sd"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(viridis)
+library(RColorBrewer)
+library(cluster)
+
+load("High dim vary sd.Rda")
+```
+
+```{r, fig.width=14, fig.height=5}
+q1 = data.frame(x = best_X[,1], y = best_X[,2], type = rep(1:7, each=50)) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + 
+  geom_point() +
+  scale_color_discrete(guide="none") +
+  labs(x="", y="", title="Replicating Signal (Perplexity = 60) \nAvg Silhouette Width = 0.178")
+
+q2 = data.frame(x = best_X_noise[,1], y = best_X_noise[,2], type = rep(1:7, each=50)) %>%
+  ggplot(aes(x = x, y = y, col = factor(type))) + 
+  geom_point() +
+  scale_color_discrete(guide="none") +
+  labs(x="", y="", title="Replicating Signal + Noise (Perplexity = 55) \nAvg Silhouette Width = 0.121")
+
+grid.arrange(q2, q1, nrow = 1)
+```
+
+```{r}
+sil = silhouette(x=rep(1:7, each=50), dist=dist(best_X), full=TRUE)
+mean(sil[,3])
+
+sil_noise = silhouette(x=rep(1:7, each=50), dist=dist(best_X_noise), full=TRUE)
+mean(sil_noise[,3])
+```
+
+
+```{r, fig.width=10, fig.height=4}
+dfs = list(df_sd1, df_sd2, df_sd3, df_sd4, df_sd5, df_sd6)
+dfs_noise = list(df_sd1_noise, df_sd2_noise, df_sd3_noise, df_sd4_noise, df_sd5_noise, df_sd6_noise)
+  
+best_perp = sapply(dfs, function(df) {
+  df$perplexity[which(df$trust == max(df$trust))]
+})
+
+best_perp_noise = sapply(dfs_noise, function(df) {
+  df$perplexity[which(df$trust == max(df$trust))]
+})
+
+data.frame(sd = rep(c(seq(from=1, to=3.5, by=0.5)), 2),
+           perp = c(best_perp, best_perp_noise),
+           type = rep(c("signal", "noise"), each=6)) %>%
+  ggplot(aes(x=sd, y=perp, group=type, color=type)) +
+    geom_point() +
+    geom_line() +
+    scale_color_brewer(limits=c("signal", "noise"), 
+                       labels=c("Signal", "Signal + Noise"), 
+                       name="Comparison Data",
+                       palette="Dark2") +
+    labs(x="Standard Deviation of Noise",
+         y="Optimal Perplexity")
+    
+```
+
+```{r, fig.width=18, fig.height=6}
+for (i in 1:6) {
+  p1 = ggplot(dfs[[i]], aes(x = perplexity, y = trust)) + 
+    geom_point(size = 2) +
+    geom_smooth(method="loess", se=FALSE, color="red") +
+    labs(x = "Perplexity", y = "Trustworthiness", title = "Replicating Signal")
+  
+  p2 = ggplot(dfs_noise[[i]], aes(x = perplexity, y = trust)) + 
+    geom_point(size = 2) +
+    geom_smooth(method="loess", se=FALSE, color="red") +
+    labs(x = "Perplexity", y = "Trustworthiness", title = "Replicating Signal + Noise")
+  
+  grid.arrange(p2, p1, nrow = 1)
+}
+```
+
+
+

@@ -1,0 +1,300 @@
+---
+title: "Out of sample experiments"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+source("Out of sample algs.R")
+library(ggplot2)
+library(tidyverse)
+library(scatterplot3d)
+library(ade4)
+```
+
+```{r, include=FALSE}
+sphere = function(b, r) {
+  theta = runif(b, 0, 2*pi)
+  phi = acos(1 - 2*runif(b,0,1))
+
+  x = r * sin(phi) * cos(theta)
+  y = r * sin(phi) * sin(theta)
+  z = r * cos(phi)
+
+  matrix(c(x,y,z), nrow = b, ncol = 3)
+}
+```
+
+# Setup Data {.tabset}
+
+## Random Data
+
+```{r}
+n = 100
+p = 3
+q = 2
+
+Z = matrix(rnorm(n*p, sd = 5), nrow = n, ncol = p)
+X = cmdscale(dist(Z))
+```
+
+## Circular Data
+
+```{r, eval=FALSE}
+n = 30
+p = 3
+q = 2
+
+theta = seq(0, 2*pi, length.out = n+1)[-(n+1)]
+x = cos(theta)
+y = sin(theta)
+Z = cbind(x, y, rep(0,n))
+X = cmdscale(dist(Z))
+```
+
+# Generate cloud of new points to embed
+
+```{r}
+b = 100
+r = 1
+
+w = c(0,0,8)
+new_pts = sphere(b, r) + matrix(rep(w, each = b), nrow = b)
+```
+
+```{r}
+scatterplot3d(rbind(Z, new_pts))
+```
+
+# Results {.tabset}
+
+## All
+
+```{r, include=FALSE}
+min_cost_pts = matrix(nrow = b, ncol = q)
+min_cost_sq_pts = matrix(nrow = b, ncol = q)
+Trosset_pts = matrix(nrow = b, ncol = q)
+Trosset_approx_pts = matrix(nrow = b, ncol = q)
+t_sne_pts = matrix(nrow = b, ncol = q)
+
+D2 = as.matrix(dist(Z)^2)
+Bengio_pts = Bengio_multiple(Z, D2, new_pts, q, K_mds_lp(2))
+
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  delta = A2[1:n, n+1]
+  
+  
+  min_cost_pts[i,] = min_cost(X, delta)
+  min_cost_sq_pts[i,] = min_cost_sq(X, delta)
+  Trosset_pts[i,] = Trosset(X, A2)
+  Trosset_approx_pts[i,] = Trosset_approx(X, A2)
+  t_sne_pts[i,] = t_sne(Z, new_pt, X, 15)
+}
+```
+
+```{r}
+data.frame(x = c(X[,1], min_cost_pts[,1], min_cost_sq_pts[,1], Trosset_pts[,1], Trosset_approx_pts[,1], Bengio_pts[,1], t_sne_pts[,1]),
+           y = c(X[,2], min_cost_pts[,2], min_cost_sq_pts[,2], Trosset_pts[,2], Trosset_approx_pts[,2], Bengio_pts[,2], t_sne_pts[,2]),
+           type = c(rep("Original Data", n), rep("Min Cost", b), rep("Squared Min Cost", b), rep("Trosset",b), rep("Trosset Approximate", b), rep("Bengio", b), rep("t-SNE", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5)
+```
+
+```{r}
+data.frame(x = c(X[,1], min_cost_pts[,1], min_cost_sq_pts[,1]),
+           y = c(X[,2], min_cost_pts[,2], min_cost_sq_pts[,2]),
+           type = c(rep("Original Data", n), rep("Min Cost", b), rep("Squared Min Cost", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5) + coord_equal()
+```
+
+## Trosset Approx vs. Bengio vs. PCA
+
+```{r, include=FALSE}
+Trosset_approx_pts = matrix(nrow = b, ncol = q)
+
+D2 = as.matrix(dist(Z)^2)
+Bengio_pts = Bengio_multiple(Z, D2, new_pts, q, K_mds_lp(2))
+
+
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  Trosset_approx_pts[i,] = Trosset_approx(X, A2)
+}
+
+res_pca = dudi.pca(Z, scale = FALSE, scannf = FALSE, nf = 2)
+pca_pts = predict(res_pca, new_pts)
+```
+
+```{r}
+data.frame(x = c(X[,1], Trosset_approx_pts[,1], Bengio_pts[,1], pca_pts[,1]),
+           y = c(X[,2], Trosset_approx_pts[,2], Bengio_pts[,2], pca_pts[,2]),
+           type = c(rep("Orignal Data", n), rep("Trosset Approximate", b), rep("Bengio", b), rep("PCA", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5)
+```
+
+# Trosset vs. Bengio (Lp Distances) {.tabset}
+
+```{r, include=FALSE}
+lp_compare = function(Z, p, new_pts, q) {
+  b = length(new_pts[,1])
+  
+  X = cmdscale(dist(Z, method = "minkowski", p = p))
+  
+  D2 = as.matrix(dist(Z, method = "minkowski", p = p)^2)
+  Bengio_pts = Bengio_multiple(Z, D2, new_pts, q, K_mds_lp(p))
+  
+  Trosset_approx_pts = matrix(nrow = b, ncol = q)
+  
+  for (i in 1:b) {
+    new_pt = new_pts[i,]
+    A2 = as.matrix(dist(rbind(Z,new_pt), method = "minkowski", p = p)^2)
+    Trosset_approx_pts[i,] = Trosset_approx(X, A2)
+  }
+  
+  plot = data.frame(x = c(X[,1], Trosset_approx_pts[,1], Bengio_pts[,1]),
+                    y = c(X[,2], Trosset_approx_pts[,2], Bengio_pts[,2]),
+                    type = c(rep("Original Data", n), rep("Trosset Approximate", b), rep("Bengio", b))) %>%
+    ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5)
+  
+  return(plot)
+}
+```
+
+## p = 1
+
+```{r}
+lp_compare(Z, 1, new_pts, q)
+```
+
+
+## p = 2
+
+```{r}
+lp_compare(Z, 2, new_pts, q)
+```
+
+## p = 3
+
+```{r}
+lp_compare(Z, 3, new_pts, q)
+```
+
+## p = inf
+
+```{r}
+X = cmdscale(dist(Z, method = "maximum"))
+  
+D2 = as.matrix(dist(Z, method = "maximum")^2)
+Bengio_pts = Bengio_multiple(Z, D2, new_pts, q, K_mds_inf)
+  
+Trosset_approx_pts = matrix(nrow = b, ncol = q)
+  
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  A2 = as.matrix(dist(rbind(Z,new_pt), method = "maximum")^2)    
+  Trosset_approx_pts[i,] = Trosset_approx(X, A2)
+}
+  
+data.frame(x = c(X[,1], Trosset_approx_pts[,1], Bengio_pts[,1]),
+           y = c(X[,2], Trosset_approx_pts[,2], Bengio_pts[,2]),
+           type = c(rep("Original Data", n), rep("Trosset Approximate", b), rep("Bengio", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1, alpha = 0.5)
+```
+
+
+# Min Cost Clustering
+
+```{r, include=FALSE}
+min_cost_pts = matrix(nrow = b, ncol = q)
+deltas = matrix(nrow = b, ncol = n)
+
+for (i in 1:b) {
+  new_pt = new_pts[i,]
+  A2 = as.matrix(dist(rbind(Z,new_pt))^2)
+  delta = A2[1:n, n+1]
+  
+  min_cost_pts[i,] = min_cost(X, delta)
+  deltas[i,] = delta
+}
+```
+
+```{r}
+data.frame(x = c(X[,1], min_cost_pts[,1]),
+           y = c(X[,2], min_cost_pts[,2]),
+           type = c(rep("Original Data", n), rep("Min Cost", b))) %>%
+  ggplot(aes(x = x, y = y, color = type)) + geom_point(size = 1) + coord_equal()
+```
+
+
+```{r}
+data.frame(id = 1:b,
+           x = c(min_cost_pts[,1]),
+           y = c(min_cost_pts[,2]),
+           type = rep("Min Cost", b)) %>%
+  ggplot(aes(x = x, y = y, color = type, label = id)) + 
+  geom_text()
+```
+
+```{r}
+group1 = c(1, 7, 8, 9, 11, 16, 18, 24, 28, 32, 38, 40, 43, 47, 55, 56, 65, 76, 
+           80, 81, 85, 87, 89, 92, 97, 98, 99)
+group2 = c(2, 3, 5, 10, 13, 14, 20, 26, 29, 31, 33, 35, 39, 46, 48, 51, 53, 54,
+57, 58, 59, 62, 69, 70, 71, 74, 78, 82, 93)
+
+points1 = min_cost_pts[group1,]
+deltas1 = deltas[group1,]
+
+points2 = min_cost_pts[group2,]
+deltas2 = deltas[group2,]
+```
+
+
+```{r}
+num_pts1 = length(points1[,1])
+
+costs1 = matrix(nrow = num_pts1, ncol = n)
+
+for (i in 1:num_pts1) {
+  y_mat = matrix(data = points1[i,], nrow = n, ncol = q, byrow = TRUE)
+  sq_diff_coord = (y_mat - X)^2
+  y_dists_sq = rowSums(sq_diff_coord)
+  costs1[i,] = abs(y_dists_sq - deltas1[i,])
+}
+
+num_pts2 = length(points2[,1])
+
+costs2 = matrix(nrow = num_pts2, ncol = n)
+
+for (i in 1:num_pts2) {
+  y_mat = matrix(data = points2[i,], nrow = n, ncol = q, byrow = TRUE)
+  sq_diff_coord = (y_mat - X)^2
+  y_dists_sq = rowSums(sq_diff_coord)
+  costs2[i,] = abs(y_dists_sq - deltas2[i,])
+}
+
+write.csv(costs1, '../Output/Costs group1.csv')
+write.csv(costs2, '../Output/Costs group2.csv')
+```
+
+```{r}
+new_pt = new_pts[1,]
+
+A2 = as.matrix(dist(rbind(Z,new_pt), method = "maximum")^2) 
+B = tau(A2)
+
+Z1 = rbind(Z,new_pt)
+
+G = matrix(nrow = n+1, ncol = n+1) 
+for (i in 1:(n+1)) {
+  for (j in 1:(n+1)) {
+    G[i,j] = K_mds_inf(Z1[i,], Z1[j,], Z)
+  }
+}
+```
+

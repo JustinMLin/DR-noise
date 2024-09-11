@@ -1,0 +1,101 @@
+---
+title: "DR Noise Experiments"
+author: "Justin Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+
+library(ggplot2)
+library(gridExtra)
+library(umap)
+library(MASS)
+library(magrittr)
+library(dplyr)
+
+source("../../../Algorithms/Out of sample algs.R")
+source("../../../Algorithms/Out of sample metrics.R")
+```
+
+```{r, include=FALSE}
+library(reticulate)
+use_python("/Users/justinlin/anaconda3/bin/python")
+py_config()
+py_available()
+
+source_python("../../../Algorithms/TSNE.py", convert = FALSE)
+```
+
+```{r}
+n = 100
+r = 6
+p = 10
+q = 2
+
+Y = rbind(mvrnorm(50, c(0,0,0,0,0,0), diag(2, nrow = 6)),
+          mvrnorm(50, c(20,0,0,0,0,0), diag(2, nrow = 6)))
+
+perplexity = 30
+n_neighbors = 15
+k = 10
+noise_sd = 1
+```
+
+```{r}
+trans_tsne = tsne(Y, perplexity)
+X_tsne = py_to_r(trans_tsne)
+
+trans_umap = umap(Y, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+X_umap = trans_umap$layout
+
+data.frame(x = X_tsne[,1], y = X_tsne[,2], 
+           cluster = c(rep(1, 50), rep(2, 50))) %>%
+  ggplot(aes(x = x, y = y, col = factor(cluster))) + geom_point()
+
+data.frame(x = X_umap[,1], y = X_umap[,2], 
+           cluster = c(rep(1, 50), rep(2, 50))) %>%
+  ggplot(aes(x = x, y = y, col = factor(cluster))) + geom_point()
+```
+
+```{r, include=FALSE}
+b = 100
+
+tsne_stress = umap_stress = vector(length = b)
+tsne_noise_stress = umap_noise_stress = vector(length = b)
+
+for (i in 1:b) {
+  Z = cbind(Y, matrix(0, nrow = n, ncol = p - r)) + matrix(rnorm(n*p, sd = noise_sd), nrow = n, ncol = p)
+  
+  trans_tsne = tsne(Z, perplexity)
+  X_tsne = py_to_r(trans_tsne)
+  
+  trans_umap = umap(Z, method = 'umap-learn', n_neighbors = n_neighbors, n_components = q)
+  X_umap = trans_umap$layout
+  
+  tsne_stress[i] = local_stress_full(Y, X_tsne, k = k)
+  tsne_noise_stress[i] = local_stress_full(Z, X_tsne, k = k)
+  
+  umap_stress[i] = local_stress_full(Y, X_umap, k = k)
+  umap_noise_stress[i] = local_stress_full(Z, X_umap, k = k)
+}
+```
+
+```{r, echo=FALSE}
+df = data.frame(tsne_stress = tsne_stress,
+                umap_stress = umap_stress,
+                tsne_error = tsne_noise_stress,
+                umap_error = umap_noise_stress)
+
+df %>% ggplot() +
+  geom_boxplot(aes(x = tsne_stress, y = "signal", color = "signal")) + 
+  geom_boxplot(aes(x = tsne_error, y = "signal + noise", color = "signal + noise")) + 
+  labs(x = "local stress", title = "t-SNE")
+
+df %>% ggplot() +
+  geom_boxplot(aes(x = umap_stress, y = "signal", color = "signal")) + 
+  geom_boxplot(aes(x = umap_error, y = "signal + noise", color = "signal + noise")) + 
+  labs(x = "local stress", title = "UMAP", y ="")
+```
+
